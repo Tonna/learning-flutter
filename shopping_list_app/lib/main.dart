@@ -5,42 +5,46 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var center = Center(
-      child: Text('Hello World'),
-    );
-    return MaterialApp(
-      title: 'Welcome to Flutter',
+    return new MaterialApp(
+      title: 'Flutter Demo',
+      theme: new ThemeData(
+        primarySwatch: Colors.blue,
+      ),
       home: new HomePage(),
     );
   }
 }
 
-class GoodInfo {
+class ProductInfo {
   String _name = "";
 
-  GoodInfo(this._name);
+  ProductInfo(this._name);
+
+  ProductInfo.empty();
 
   String get name => name;
 
   @override
   String toString() {
-    return 'GoodInfo{_name: $_name}';
+    return 'ProductInfo{_name: $_name}';
   }
 }
 
 class HomePage extends StatefulWidget {
+  List<ProductInfo> _products = new List<ProductInfo>();
+
   HomePage({Key key}) : super(key: key);
 
-  List<GoodInfo> _goods = new List<GoodInfo>();
-
   @override
-  _HomePageState createState() => new _HomePageState(_goods);
+  _HomePageState createState() => new _HomePageState(_products);
 }
 
 class _HomePageState extends State<HomePage> {
-  List<GoodInfo> _goods;
+  List<ProductInfo> _products;
 
-  _HomePageState(this._goods);
+  _HomePageState(List<ProductInfo> _products) {
+    this._products = _products;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +54,13 @@ class _HomePageState extends State<HomePage> {
         ),
         body: new Center(
             child: new ListView(children: [
-              Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: GoodsWidget(goods: _goods, onSaved: _onSaved))
-            ])));
+          Padding(
+              padding: EdgeInsets.all(20.0),
+              child: ProductWidget(products: _products, onSaved: _onSaved))
+        ])));
   }
 
-  _onSaved(List<GoodInfo> goods) {
+  _onSaved(List<ProductInfo> products) {
     showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
@@ -75,75 +79,45 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class GoodsWidget extends StatefulWidget {
-  List<GoodInfo> _goods;
-  ValueChanged<List<GoodInfo>> _onSaved;
+class ProductWidget extends StatefulWidget {
+  List<ProductInfo> _products;
+  ValueChanged<List<ProductInfo>> _onSaved;
 
-  GoodsWidget({Key key,
-    @required List<GoodInfo> goods,
-    @required ValueChanged<List<GoodInfo>> onSaved})
+  ProductWidget(
+      {Key key,
+      @required List<ProductInfo> products,
+      @required ValueChanged<List<ProductInfo>> onSaved})
       : super(key: key) {
-    this._goods = goods;
+    this._products = products;
     this._onSaved = onSaved;
   }
 
   @override
-  _GoodsWidgetState createState() => new _GoodsWidgetState(_goods);
+  _ProductWidgetState createState() => new _ProductWidgetState(_products);
 }
 
-class _GoodsWidgetState extends State<GoodsWidget> {
-  List<GoodInfo> _goods;
+class _ProductWidgetState extends State<ProductWidget> {
+  List<ProductInfo> _products;
 
-  _GoodsWidgetState(final List<GoodInfo> goods) {
-    _goods = goods;
+  _ProductWidgetState(final List<ProductInfo> products) {
+    _products = products;
   }
 
   @override
   Widget build(BuildContext context) {
-    _goods.add(new GoodInfo("a"));
+    _products.add(new ProductInfo("a"));
     ListView builder = ListView.builder(
-        itemCount: _goods.length,
+        itemCount: _products.length,
         itemBuilder: (context, index) {
-          var g = _goods[index];
-          return ListTile(
-              title: Text('${g.name}')
-          );
+          var g = _products[index];
+          return ListTile(title: Text('${g.name}'));
         });
 
     return new Scaffold(
         appBar: new AppBar(
-          title: new Text("AAA"),
+          title: new Text("Nasa Offices"),
         ),
-        body: new Center(child: builder)
-    );
+        body: new Center(child: builder));
+
   }
 }
-
-//ListView builder = ListView.builder(
-//    itemCount: _nasaOffices.length,
-//    itemBuilder: (context, index) {
-//      print('invoking itemBuilder for row ${index}');
-//      var nasaOffice = _nasaOffices[index];
-//      return ListTile(
-//          title: Text('${nasaOffice['Name']}'),
-//          subtitle: Text('${nasaOffice['Address']}, ${nasaOffice['City']},'
-//              '${nasaOffice['State']}, ${nasaOffice['ZIP']},'
-//              '${nasaOffice['Country']}'),
-//          trailing: Icon(Icons.arrow_right));
-//    });
-//return new Scaffold(
-//appBar: new AppBar(
-//title: new Text("Nasa Offices"),
-//),
-//body: new Center(child: builder));
-//}
-
-
-
-
-
-
-
-
-
-
