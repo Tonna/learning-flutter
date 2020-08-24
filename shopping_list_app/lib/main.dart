@@ -113,6 +113,7 @@ class _ProductWidgetState extends State<ProductWidget> {
         onPressed: () {
           if (_formKey.currentState.validate()) {
             _products.add(createDataObjectFromFormData());
+            sortProducts();
             clearFormData();
             Navigator.pop(context);
           }
@@ -174,7 +175,7 @@ class _ProductWidgetState extends State<ProductWidget> {
         return "to buy";
         break;
       case ProductState.notActive:
-        return "we have enough";
+        return "enough";
         break;
       default:
         return "unknown state";
