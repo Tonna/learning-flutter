@@ -51,17 +51,34 @@ class _ProductWidgetState extends State<ProductWidget> {
             return ListTile(title: new ListTile(title: Text(_products[index])));
           }),
       floatingActionButton: new FloatingActionButton(
-          onPressed: _addSomething,
-          backgroundColor: Colors.red,
-          child: new Icon(Icons.portable_wifi_off),
+        onPressed: _addSomethingDialog,
+        backgroundColor: Colors.red,
+        child: new Icon(Icons.portable_wifi_off),
       ),
     );
   }
 
-  void _addSomething() {
-    _products.add("something");
-    setState(() {
+  void _addSomethingDialog() async {
+    String _newProduct;
 
-    });
+    _newProduct = await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+              title: const Text("Enter product name"),
+              children: <Widget>[
+                SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(context, "test1");
+                  },
+                  child: const Text("Yeah"),
+                )
+              ]);
+        });
+
+    if (_newProduct != null) {
+      _products.add(_newProduct);
+    }
+    setState(() {});
   }
 }
