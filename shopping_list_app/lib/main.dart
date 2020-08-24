@@ -41,14 +41,14 @@ class _ProductWidgetState extends State<ProductWidget> {
   final _formKey = GlobalKey<FormState>();
 
   _ProductWidgetState() {
-    _fnameTextController = TextEditingController();
+    _productNameTextController = TextEditingController();
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text("ZZZ"),
+        title: new Text("Products list"),
       ),
       body: ListView.builder(
           itemCount: _products.length,
@@ -57,44 +57,45 @@ class _ProductWidgetState extends State<ProductWidget> {
           }),
       floatingActionButton: new FloatingActionButton(
         onPressed: _addSomethingDialog,
-        backgroundColor: Colors.red,
-        child: new Icon(Icons.portable_wifi_off),
+        backgroundColor: Colors.pinkAccent,
+        child: new Icon(Icons.add),
       ),
     );
   }
 
   String createDataObjectFromFormData() {
-    return _fnameTextController.text;
+    return _productNameTextController.text;
   }
 
   void clearFormData() {
-    _fnameTextController.clear();
+    _productNameTextController.clear();
   }
 
   void _addSomethingDialog() async {
     String _newProduct;
 
     List<Widget> formWidgetList = new List();
-    formWidgetList.add(createFNameWidget());
-    formWidgetList.add(RaisedButton(
-      onPressed: () {
-        if (_formKey.currentState.validate()) {
-          _products.add(createDataObjectFromFormData());
-          clearFormData();
+    formWidgetList.add(createProductNameWidget());
+    formWidgetList.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+      RaisedButton(
+        onPressed: () {
+          if (_formKey.currentState.validate()) {
+            _products.add(createDataObjectFromFormData());
+            clearFormData();
+            Navigator.pop(context);
+          }
+        },
+        child: new Text('Save'),
+      ),
+      RaisedButton(
+        onPressed: () {
           Navigator.pop(context);
-        }
-      },
-      child: new Text('Save'),
-
-    ));
-
-    formWidgetList.add(RaisedButton(
-      onPressed: () {
-          Navigator.pop(context);
-      },
-      child: new Text('Close'),
-
-    ));
+        },
+        child: new Text('Close'),
+      )
+    ]));
 
     _newProduct = await showDialog<String>(
         context: context,
@@ -115,7 +116,7 @@ class _ProductWidgetState extends State<ProductWidget> {
     setState(() {});
   }
 
-  TextFormField createFNameWidget() {
+  TextFormField createProductNameWidget() {
     return new TextFormField(
       validator: (value) {
         if (value.isEmpty) {
@@ -123,14 +124,14 @@ class _ProductWidgetState extends State<ProductWidget> {
         }
       },
       decoration: InputDecoration(
-          icon: const Icon(Icons.person),
+          icon: const Icon(Icons.short_text),
           hintText: 'Product name',
           labelText: 'Enter product name'),
       onSaved: (String value) {},
-      controller: _fnameTextController,
+      controller: _productNameTextController,
       autofocus: true,
     );
   }
 
-  TextEditingController _fnameTextController;
+  TextEditingController _productNameTextController;
 }
