@@ -38,6 +38,11 @@ class ProductWidget extends StatefulWidget {
 
 class _ProductWidgetState extends State<ProductWidget> {
   List<String> _products = new List<String>();
+  final _formKey = GlobalKey<FormState>();
+
+  _ProductWidgetState() {
+    _fnameTextController = TextEditingController();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,20 +63,48 @@ class _ProductWidgetState extends State<ProductWidget> {
     );
   }
 
+  String createDataObjectFromFormData() {
+    return _fnameTextController.text;
+  }
+
+  void clearFormData() {
+    _fnameTextController.clear();
+  }
+
   void _addSomethingDialog() async {
     String _newProduct;
+
+    List<Widget> formWidgetList = new List();
+    formWidgetList.add(createFNameWidget());
+    formWidgetList.add(RaisedButton(
+      onPressed: () {
+        if (_formKey.currentState.validate()) {
+          _products.add(createDataObjectFromFormData());
+          clearFormData();
+          Navigator.pop(context);
+        }
+      },
+      child: new Text('Save'),
+
+    ));
+
+    formWidgetList.add(RaisedButton(
+      onPressed: () {
+          Navigator.pop(context);
+      },
+      child: new Text('Close'),
+
+    ));
 
     _newProduct = await showDialog<String>(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
               title: const Text("Enter product name"),
-              children: <Widget>[
-                SimpleDialogOption(
-                  onPressed: () {
-                    Navigator.pop(context, "test1");
-                  },
-                  child: const Text("Yeah"),
+              children: [
+                Form(
+                  key: _formKey,
+                  child: Column(children: formWidgetList),
                 )
               ]);
         });
@@ -81,4 +114,23 @@ class _ProductWidgetState extends State<ProductWidget> {
     }
     setState(() {});
   }
+
+  TextFormField createFNameWidget() {
+    return new TextFormField(
+      validator: (value) {
+        if (value.isEmpty) {
+          return 'Please enter product name.';
+        }
+      },
+      decoration: InputDecoration(
+          icon: const Icon(Icons.person),
+          hintText: 'Product name',
+          labelText: 'Enter product name'),
+      onSaved: (String value) {},
+      controller: _fnameTextController,
+      autofocus: true,
+    );
+  }
+
+  TextEditingController _fnameTextController;
 }
