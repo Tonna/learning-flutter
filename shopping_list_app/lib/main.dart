@@ -1,19 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 void main() => runApp(new MyApp());
-
-class Customer {
-  int _id;
-  String _name;
-
-  Customer(this._id, this._name);
-
-  Customer.empty() : this(0, "");
-
-  int get id => _id;
-
-  String get name => _name;
-}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -39,6 +27,7 @@ class ProductWidget extends StatefulWidget {
 class _ProductWidgetState extends State<ProductWidget> {
   List<Product> _products = new List<Product>();
   final _formKey = GlobalKey<FormState>();
+  final DateFormat _dateFormat = DateFormat("d MMM HH:mm");
 
   _ProductWidgetState() {
     _productNameTextController = TextEditingController();
@@ -53,11 +42,35 @@ class _ProductWidgetState extends State<ProductWidget> {
       body: ListView.builder(
           itemCount: _products.length,
           itemBuilder: (context, index) {
-            return ListTile(
-                title: new ListTile(
-              title: Text(_products[index].name),
-              subtitle: (Text(_products[index].stateLog.last.toString())),
-            ));
+            var currentProduct = _products[index];
+            var currentProductState = currentProduct.stateLog.last.state;
+            var isActive = currentProductState == ProductState.active;
+            return Container(
+                color: isActive ? Colors.red : Colors.white,
+                child: ListTile(
+                  title: Text(currentProduct.name),
+                  leading:
+                      Text((_products.indexOf(currentProduct) + 1).toString()),
+                  subtitle: (Text(
+                      getPrintableState(currentProduct.stateLog.last.state) +
+                          " at " +
+                          _dateFormat.format(currentProduct.stateLog.last.at))),
+                  trailing:
+                      Icon(isActive ? Icons.shopping_basket : Icons.looks),
+                  onTap: () {
+                    setState(() {
+                      if (isActive) {
+                        currentProduct.stateLog.add(new ProductStateChange(
+                            ProductState.notActive, DateTime.now()));
+                        sortProducts();
+                      } else {
+                        currentProduct.stateLog.add(new ProductStateChange(
+                            ProductState.active, DateTime.now()));
+                        sortProducts();
+                      }
+                    });
+                  },
+                ));
           }),
       floatingActionButton: new FloatingActionButton(
         onPressed: _addSomethingDialog,
@@ -67,10 +80,21 @@ class _ProductWidgetState extends State<ProductWidget> {
     );
   }
 
+  void sortProducts() {
+    _products.sort((a, b) {
+      var statusComparison =
+          a.stateLog.last.state.index.compareTo(b.stateLog.last.state.index);
+      if (statusComparison == 0) {
+        return a.name.compareTo(b.name);
+      }
+      return statusComparison;
+    });
+  }
+
   Product createDataObjectFromFormData() {
     var list = new List<ProductStateChange>();
     list.add(new ProductStateChange(ProductState.created, DateTime.now()));
-    return new Product(_productNameTextController.text, list );
+    return new Product(_productNameTextController.text, list);
   }
 
   void clearFormData() {
@@ -84,6 +108,7 @@ class _ProductWidgetState extends State<ProductWidget> {
     formWidgetList.add(createProductNameWidget());
     formWidgetList
         .add(Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          //TODO buttons too close now
       RaisedButton(
         onPressed: () {
           if (_formKey.currentState.validate()) {
@@ -139,6 +164,22 @@ class _ProductWidgetState extends State<ProductWidget> {
   }
 
   TextEditingController _productNameTextController;
+
+  String getPrintableState(ProductState state) {
+    switch (state) {
+      case ProductState.created:
+        return "new";
+        break;
+      case ProductState.active:
+        return "to buy";
+        break;
+      case ProductState.notActive:
+        return "we have enough";
+        break;
+      default:
+        return "unknown state";
+    }
+  }
 }
 
 class Product {
@@ -153,7 +194,11 @@ class Product {
 }
 
 enum ProductState {
-  created, active, notActive
+  //using enum value position for sorting
+  //TODO come up with better, less implicit solution
+  active,
+  created,
+  notActive
 }
 
 class ProductStateChange {
@@ -161,6 +206,7 @@ class ProductStateChange {
   final DateTime _at;
 
   ProductState get state => _state;
+
   DateTime get at => _at;
 
   ProductStateChange(this._state, this._at);
