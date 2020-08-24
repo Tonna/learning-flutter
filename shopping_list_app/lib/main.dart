@@ -37,7 +37,7 @@ class ProductWidget extends StatefulWidget {
 }
 
 class _ProductWidgetState extends State<ProductWidget> {
-  List<String> _products = new List<String>();
+  List<Product> _products = new List<Product>();
   final _formKey = GlobalKey<FormState>();
 
   _ProductWidgetState() {
@@ -53,7 +53,11 @@ class _ProductWidgetState extends State<ProductWidget> {
       body: ListView.builder(
           itemCount: _products.length,
           itemBuilder: (context, index) {
-            return ListTile(title: new ListTile(title: Text(_products[index])));
+            return ListTile(
+                title: new ListTile(
+              title: Text(_products[index].name),
+              subtitle: (Text(_products[index].stateLog.last.toString())),
+            ));
           }),
       floatingActionButton: new FloatingActionButton(
         onPressed: _addSomethingDialog,
@@ -63,8 +67,10 @@ class _ProductWidgetState extends State<ProductWidget> {
     );
   }
 
-  String createDataObjectFromFormData() {
-    return _productNameTextController.text;
+  Product createDataObjectFromFormData() {
+    var list = new List<ProductStateChange>();
+    list.add(new ProductStateChange(ProductState.created, DateTime.now()));
+    return new Product(_productNameTextController.text, list );
   }
 
   void clearFormData() {
@@ -72,13 +78,12 @@ class _ProductWidgetState extends State<ProductWidget> {
   }
 
   void _addSomethingDialog() async {
-    String _newProduct;
+    Product _newProduct;
 
     List<Widget> formWidgetList = new List();
     formWidgetList.add(createProductNameWidget());
-    formWidgetList.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+    formWidgetList
+        .add(Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       RaisedButton(
         onPressed: () {
           if (_formKey.currentState.validate()) {
@@ -97,7 +102,7 @@ class _ProductWidgetState extends State<ProductWidget> {
       )
     ]));
 
-    _newProduct = await showDialog<String>(
+    _newProduct = await showDialog<Product>(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
@@ -134,4 +139,34 @@ class _ProductWidgetState extends State<ProductWidget> {
   }
 
   TextEditingController _productNameTextController;
+}
+
+class Product {
+  String _name;
+  List<ProductStateChange> _stateLog;
+
+  String get name => _name;
+
+  List<ProductStateChange> get stateLog => _stateLog;
+
+  Product(this._name, this._stateLog);
+}
+
+enum ProductState {
+  created, active, notActive
+}
+
+class ProductStateChange {
+  final ProductState _state;
+  final DateTime _at;
+
+  ProductState get state => _state;
+  DateTime get at => _at;
+
+  ProductStateChange(this._state, this._at);
+
+  @override
+  String toString() {
+    return '$_state, at $_at';
+  }
 }
