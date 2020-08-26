@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 void main() => runApp(new MyApp());
 
@@ -7,13 +11,60 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: new ProductWidget(),
+    return DbWidget(
+        child: MaterialApp(
+            title: 'Flutter Demo',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+            ),
+            home: ProductWidget()));
+  }
+}
+
+class DbWidget extends InheritedWidget {
+  Database _database;
+  String _databasesPath;
+
+  DbWidget({Key key, @required Widget child})
+      : assert(child != null),
+        super(key: key, child: child);
+
+  @override
+  bool updateShouldNotify(covariant InheritedWidget oldWidget) {
+    return false;
+  }
+
+  Future<bool> loadDatabasesPath() async {
+    _databasesPath = await getDatabasesPath();
+    return true;
+  }
+
+  Future<bool> openAndInitDatabase() async {
+    _database = await openDatabase(
+      join(_databasesPath, 'shopping_list.db'),
+      onCreate: (db, version) {
+        db.execute(
+            "CREATE TABLE `product` ( `id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY(`id`) )");
+        db.execute(
+            "CREATE TABLE `product_product_state_change_link` ( `product_id` INTEGER, `product_state_change_id` INTEGER, PRIMARY KEY(`product_id`,`product_state_change_id`))");
+        db.execute(
+            "CREATE TABLE `product_state_change` ( `id` INTEGER, `new_state` TEXT NOT NULL, `changed_at` TEXT NOT NULL, PRIMARY KEY(`id`) )");
+
+        db.execute(
+            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
+        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
+        db.execute(
+            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
+        db.execute(
+            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
+      },
+      version: 1,
     );
+    return true;
+  }
+
+  static DbWidget of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<DbWidget>();
   }
 }
 
@@ -25,16 +76,47 @@ class ProductWidget extends StatefulWidget {
 }
 
 class _ProductWidgetState extends State<ProductWidget> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   List<Product> _products = new List<Product>();
   final _formKey = GlobalKey<FormState>();
   final DateFormat _dateFormat = DateFormat("d MMM HH:mm");
+
+  bool _loadedDatabasePath = false;
 
   _ProductWidgetState() {
     _productNameTextController = TextEditingController();
   }
 
+  _showSnackBar(String content, {bool error = false}) {
+    print("snackbar");
+    print(content);
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+      content:
+          Text('${error ? "An unexpected errro occured: " : ""}${content}'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
+    try {
+      var dbWidget = DbWidget.of(context);
+      //print(dbWidget);
+      dbWidget.loadDatabasesPath().then((b) {
+//        setState(() {
+//          _loadedDatabasePath = true;
+//        });
+      }).catchError((error) {
+        _showSnackBar(error.toString(), error: true);
+      });
+    } catch (e) {
+      print("WTF?");
+      print(e);
+      print("end WTF?");
+
+      _showSnackBar(e.toString(), error: true);
+    }
+
     return new Scaffold(
       appBar: new AppBar(
         title: new Text("Products list"),
@@ -73,7 +155,7 @@ class _ProductWidgetState extends State<ProductWidget> {
                 ));
           }),
       floatingActionButton: new FloatingActionButton(
-        onPressed: _addSomethingDialog,
+        onPressed: () => _addSomethingDialog(context),
         backgroundColor: Colors.pinkAccent,
         child: new Icon(Icons.add),
       ),
@@ -101,14 +183,14 @@ class _ProductWidgetState extends State<ProductWidget> {
     _productNameTextController.clear();
   }
 
-  void _addSomethingDialog() async {
+  void _addSomethingDialog(BuildContext context) async {
     Product _newProduct;
 
     List<Widget> formWidgetList = new List();
     formWidgetList.add(createProductNameWidget());
     formWidgetList
         .add(Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          //TODO buttons too close now
+      //TODO buttons too close now
       RaisedButton(
         onPressed: () {
           if (_formKey.currentState.validate()) {
@@ -143,8 +225,8 @@ class _ProductWidgetState extends State<ProductWidget> {
 
     if (_newProduct != null) {
       _products.add(_newProduct);
+      setState(() {});
     }
-    setState(() {});
   }
 
   TextFormField createProductNameWidget() {
