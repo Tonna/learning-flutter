@@ -64,6 +64,21 @@ class DbWidget extends InheritedWidget {
   }
 
   Future<List<Product>> loadListOfProducts() async {
+//    final List<Map<String, dynamic>> products = await _database.query("product");
+//    print(products);
+  //  print(_database.isOpen);
+    print(_database == null);
+    final List<Map<String, dynamic>> state_change =
+        await _database.query("product_state_change");
+    print(state_change);
+    print(_database == null);
+    //print(_database.isOpen);
+
+
+    final List<Map<String, dynamic>> links =
+        await _database.query("product_product_state_change_link");
+    print(links);
+    print(_database == null);
 
     List<Product> v = new List<Product>();
 
@@ -105,7 +120,7 @@ class _ProductWidgetState extends State<ProductWidget> {
     print(content);
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content:
-          Text('${error ? "An unexpected errro occured: " : ""}${content}'),
+          Text('${error ? "An unexpected error occured: " : ""}${content}'),
     ));
   }
 
@@ -155,9 +170,11 @@ class _ProductWidgetState extends State<ProductWidget> {
   Widget build(BuildContext context) {
     if (!_loadedDatabasePath) {
       _loadDatabasesPath(context);
-    } else if (!_openedDatabase) {
+    }
+    if (_loadedDatabasePath && !_openedDatabase) {
       _openAndInitDatabase(context);
-    } else if (!_listLoaded) {
+    }
+    if (_openedDatabase && !_listLoaded) {
       _loadList(context);
     }
 
@@ -219,7 +236,8 @@ class _ProductWidgetState extends State<ProductWidget> {
 
   Product createDataObjectFromFormData() {
     var list = new List<ProductStateChange>();
-    list.add(new ProductStateChange(null, ProductState.created, DateTime.now()));
+    list.add(
+        new ProductStateChange(null, ProductState.created, DateTime.now()));
     return new Product(null, _productNameTextController.text, list);
   }
 
@@ -316,9 +334,10 @@ class Product {
 
   Product(this._id, this._name, this._stateLog);
 
-
   int get id => _id;
+
   String get name => _name;
+
   List<ProductStateChange> get stateLog => _stateLog;
 
   @override
@@ -346,9 +365,10 @@ class ProductStateChange {
   final ProductState _state;
   final DateTime _at;
 
-
   int get id => _id;
+
   ProductState get state => _state;
+
   DateTime get at => _at;
 
   ProductStateChange(this._id, this._state, this._at);
