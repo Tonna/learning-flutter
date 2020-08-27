@@ -63,6 +63,16 @@ class DbWidget extends InheritedWidget {
     return true;
   }
 
+  Future<List<Product>> loadListOfProducts() async {
+
+    List<Product> v = new List<Product>();
+
+    List<ProductStateChange> b = new List<ProductStateChange>();
+    b.add(ProductStateChange(null, ProductState.created, DateTime.now()));
+    v.add(Product(null, "avocado", b));
+    return v;
+  }
+
   static DbWidget of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<DbWidget>();
   }
@@ -83,6 +93,8 @@ class _ProductWidgetState extends State<ProductWidget> {
   final DateFormat _dateFormat = DateFormat("d MMM HH:mm");
 
   bool _loadedDatabasePath = false;
+  bool _openedDatabase = false;
+  bool _listLoaded = false;
 
   _ProductWidgetState() {
     _productNameTextController = TextEditingController();
@@ -97,24 +109,56 @@ class _ProductWidgetState extends State<ProductWidget> {
     ));
   }
 
-  @override
-  Widget build(BuildContext context) {
+  _loadDatabasesPath(BuildContext context) {
     try {
       var dbWidget = DbWidget.of(context);
-      //print(dbWidget);
       dbWidget.loadDatabasesPath().then((b) {
-//        setState(() {
-//          _loadedDatabasePath = true;
-//        });
+        setState(() {
+          _loadedDatabasePath = true;
+        });
       }).catchError((error) {
         _showSnackBar(error.toString(), error: true);
       });
     } catch (e) {
-      print("WTF?");
-      print(e);
-      print("end WTF?");
-
       _showSnackBar(e.toString(), error: true);
+    }
+  }
+
+  _openAndInitDatabase(BuildContext context) {
+    try {
+      DbWidget.of(context).openAndInitDatabase().then((b) {
+        setState(() {
+          _openedDatabase = true;
+        });
+      }).catchError((error) {
+        _showSnackBar(error.toString(), error: true);
+      });
+    } catch (e) {
+      _showSnackBar(e.toString(), error: true);
+    }
+  }
+
+  _loadList(BuildContext context) {
+    try {
+      DbWidget.of(context).loadListOfProducts().then((list) {
+        _products = list;
+        _listLoaded = true;
+      }).catchError((error) {
+        _showSnackBar(error.toString(), error: true);
+      });
+    } catch (e) {
+      _showSnackBar(e.toString(), error: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loadedDatabasePath) {
+      _loadDatabasesPath(context);
+    } else if (!_openedDatabase) {
+      _openAndInitDatabase(context);
+    } else if (!_listLoaded) {
+      _loadList(context);
     }
 
     return new Scaffold(
@@ -142,12 +186,12 @@ class _ProductWidgetState extends State<ProductWidget> {
                   onTap: () {
                     setState(() {
                       if (isActive) {
-                        currentProduct.stateLog.add(new ProductStateChange(
-                            ProductState.notActive, DateTime.now()));
+                        currentProduct.stateLog.add(ProductStateChange(
+                            null, ProductState.notActive, DateTime.now()));
                         sortProducts();
                       } else {
-                        currentProduct.stateLog.add(new ProductStateChange(
-                            ProductState.active, DateTime.now()));
+                        currentProduct.stateLog.add(ProductStateChange(
+                            null, ProductState.active, DateTime.now()));
                         sortProducts();
                       }
                     });
@@ -175,8 +219,8 @@ class _ProductWidgetState extends State<ProductWidget> {
 
   Product createDataObjectFromFormData() {
     var list = new List<ProductStateChange>();
-    list.add(new ProductStateChange(ProductState.created, DateTime.now()));
-    return new Product(_productNameTextController.text, list);
+    list.add(new ProductStateChange(null, ProductState.created, DateTime.now()));
+    return new Product(null, _productNameTextController.text, list);
   }
 
   void clearFormData() {
@@ -225,8 +269,8 @@ class _ProductWidgetState extends State<ProductWidget> {
 
     if (_newProduct != null) {
       _products.add(_newProduct);
-      setState(() {});
     }
+    setState(() => {});
   }
 
   TextFormField createProductNameWidget() {
@@ -266,14 +310,27 @@ class _ProductWidgetState extends State<ProductWidget> {
 }
 
 class Product {
-  String _name;
-  List<ProductStateChange> _stateLog;
+  final int _id;
+  final String _name;
+  final List<ProductStateChange> _stateLog;
 
+  Product(this._id, this._name, this._stateLog);
+
+
+  int get id => _id;
   String get name => _name;
-
   List<ProductStateChange> get stateLog => _stateLog;
 
-  Product(this._name, this._stateLog);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Product &&
+          _id == other._id &&
+          _name == other._name &&
+          _stateLog == other._stateLog;
+
+  @override
+  int get hashCode => _id.hashCode ^ _name.hashCode ^ _stateLog.hashCode;
 }
 
 enum ProductState {
@@ -285,16 +342,28 @@ enum ProductState {
 }
 
 class ProductStateChange {
+  final int _id;
   final ProductState _state;
   final DateTime _at;
 
-  ProductState get state => _state;
 
+  int get id => _id;
+  ProductState get state => _state;
   DateTime get at => _at;
 
-  ProductStateChange(this._state, this._at);
+  ProductStateChange(this._id, this._state, this._at);
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProductStateChange &&
+          _id == other._id &&
+          _state == other._state &&
+          _at == other._at;
+
+  @override
+  int get hashCode => _id.hashCode ^ _state.hashCode ^ _at.hashCode;
+
   String toString() {
     return '$_state, at $_at';
   }
