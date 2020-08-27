@@ -45,7 +45,21 @@ class DbWidget extends InheritedWidget {
     log("db opened internal before start");
     _database = await openDatabase(
       join(_databasesPath, 'shopping_list.db'),
+      onOpen: (db) {
+        db.delete("product");
+        db.delete("product_state_change");
+        db.delete("product_product_state_change_link");
+
+        db.execute(
+            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
+        db.execute(
+            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
+        db.execute(
+            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
+      },
       onCreate: (db, version) {
+
+
         db.execute(
             "CREATE TABLE `product` ( `id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY(`id`) )");
         db.execute(
@@ -55,7 +69,6 @@ class DbWidget extends InheritedWidget {
 
         db.execute(
             "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
-        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
         db.execute(
             "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
         db.execute(
