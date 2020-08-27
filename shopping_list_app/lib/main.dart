@@ -25,6 +25,8 @@ class DbWidget extends InheritedWidget {
   Database _database;
   String _databasesPath;
 
+  Database get database => _database;
+
   DbWidget({Key key, @required Widget child})
       : assert(child != null),
         super(key: key, child: child);
@@ -40,6 +42,7 @@ class DbWidget extends InheritedWidget {
   }
 
   Future<bool> openAndInitDatabase() async {
+    log("db opened internal before start");
     _database = await openDatabase(
       join(_databasesPath, 'shopping_list.db'),
       onCreate: (db, version) {
@@ -60,28 +63,28 @@ class DbWidget extends InheritedWidget {
       },
       version: 1,
     );
+    log("db opened internal finish");
     return true;
   }
 
   Future<List<Product>> loadListOfProducts() async {
-//    final List<Map<String, dynamic>> products = await _database.query("product");
-//    print(products);
-  //  print(_database.isOpen);
-    print(_database == null);
+    log("loadList start");
+
+    final List<Map<String, dynamic>> products =
+        await _database.query("product");
+    log(products);
+
     final List<Map<String, dynamic>> state_change =
         await _database.query("product_state_change");
-    print(state_change);
-    print(_database == null);
-    //print(_database.isOpen);
-
+    log(state_change);
 
     final List<Map<String, dynamic>> links =
         await _database.query("product_product_state_change_link");
-    print(links);
-    print(_database == null);
+    log(links);
+
+    log("loadList ended");
 
     List<Product> v = new List<Product>();
-
     List<ProductStateChange> b = new List<ProductStateChange>();
     b.add(ProductStateChange(null, ProductState.created, DateTime.now()));
     v.add(Product(null, "avocado", b));
@@ -115,9 +118,10 @@ class _ProductWidgetState extends State<ProductWidget> {
     _productNameTextController = TextEditingController();
   }
 
-  _showSnackBar(String content, {bool error = false}) {
-    print("snackbar");
-    print(content);
+  _showSnackBar(BuildContext context, String content, {bool error = false}) {
+    log("1: $_loadedDatabasePath 2: $_openedDatabase 3: $_listLoaded database is null: ${DbWidget.of(context).database == null}");
+
+    //print(content);
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content:
           Text('${error ? "An unexpected error occured: " : ""}${content}'),
@@ -129,13 +133,13 @@ class _ProductWidgetState extends State<ProductWidget> {
       var dbWidget = DbWidget.of(context);
       dbWidget.loadDatabasesPath().then((b) {
         setState(() {
-          _loadedDatabasePath = true;
+          _loadedDatabasePath = b;
         });
       }).catchError((error) {
-        _showSnackBar(error.toString(), error: true);
+        _showSnackBar(context, error.toString(), error: true);
       });
     } catch (e) {
-      _showSnackBar(e.toString(), error: true);
+      _showSnackBar(context, e.toString(), error: true);
     }
   }
 
@@ -143,13 +147,13 @@ class _ProductWidgetState extends State<ProductWidget> {
     try {
       DbWidget.of(context).openAndInitDatabase().then((b) {
         setState(() {
-          _openedDatabase = true;
+          _openedDatabase = b;
         });
       }).catchError((error) {
-        _showSnackBar(error.toString(), error: true);
+        _showSnackBar(context, error.toString(), error: true);
       });
     } catch (e) {
-      _showSnackBar(e.toString(), error: true);
+      _showSnackBar(context, e.toString(), error: true);
     }
   }
 
@@ -159,23 +163,33 @@ class _ProductWidgetState extends State<ProductWidget> {
         _products = list;
         _listLoaded = true;
       }).catchError((error) {
-        _showSnackBar(error.toString(), error: true);
+        log("loadList catch error");
+        _showSnackBar(context, error.toString(), error: true);
       });
     } catch (e) {
-      _showSnackBar(e.toString(), error: true);
+      _showSnackBar(context, e.toString(), error: true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    log("build");
+
+    //TODO clean up state mess. use correct way to determine that database is ok to use
     if (!_loadedDatabasePath) {
       _loadDatabasesPath(context);
+      log("db path loaded");
     }
     if (_loadedDatabasePath && !_openedDatabase) {
       _openAndInitDatabase(context);
+      log("db opened?");
     }
-    if (_openedDatabase && !_listLoaded) {
+    if (_loadedDatabasePath &&
+        _openedDatabase &&
+        DbWidget.of(context).database != null &&
+        !_listLoaded) {
       _loadList(context);
+      log("products loaded from db???");
     }
 
     return new Scaffold(
@@ -387,4 +401,8 @@ class ProductStateChange {
   String toString() {
     return '$_state, at $_at';
   }
+}
+
+void log(Object o) {
+  print(DateTime.now().toIso8601String() + " " + o.toString());
 }
