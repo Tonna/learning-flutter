@@ -52,14 +52,21 @@ class DbWidget extends InheritedWidget {
 
         db.execute(
             "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
+        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
         db.execute(
             "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
         db.execute(
+            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (2,'new','2020-04-04T10:00:00.123Z')");
+        db.execute(
+            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (3,'active','2020-04-04T12:50:00.123Z')");
+        db.execute(
             "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
+        db.execute(
+            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,2)");
+        db.execute(
+            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,3)");
       },
       onCreate: (db, version) {
-
-
         db.execute(
             "CREATE TABLE `product` ( `id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY(`id`) )");
         db.execute(
@@ -97,11 +104,55 @@ class DbWidget extends InheritedWidget {
 
     log("loadList ended");
 
-    List<Product> v = new List<Product>();
-    List<ProductStateChange> b = new List<ProductStateChange>();
-    b.add(ProductStateChange(null, ProductState.created, DateTime.now()));
-    v.add(Product(null, "avocado", b));
-    return v;
+    List<Map<String, dynamic>> list = await _database.rawQuery(
+        "select p.id as product_id, p.name as product_name, c.id as change_state_id, c.new_state as new_state, c.changed_at as state_changed_at"
+        " from product p"
+        " join product_product_state_change_link l"
+        " on p.id == l.product_id"
+        " join product_state_change c"
+        " on c.id == l.product_state_change_id");
+    //TODO add order by and stuff to reduce work
+    log(list);
+
+    var listOfStateChanges = Map<int, List<ProductStateChange>>();
+    var listOfProducts = Map<int, Product>();
+
+    try {
+      list.forEach((element) {
+        log(element);
+        if (!listOfStateChanges.containsKey(element['product_id'])) {
+          listOfStateChanges[element['product_id']] =
+              List<ProductStateChange>();
+        }
+        listOfStateChanges[element['product_id']].add(ProductStateChange(
+            element['change_state_id'],
+            getState(element['new_state']),
+            DateTime.parse(element['state_changed_at'])));
+      });
+      log(listOfStateChanges);
+
+      list.forEach((element) {
+        if (!listOfProducts.containsKey(element['product_id'])) {
+          listOfProducts[element['product_id']] = Product(
+              element['product_id'],
+              element['product_name'],
+              listOfStateChanges[element['product_id']]);
+        }
+      });
+
+      print(listOfProducts);
+    } catch (e) {
+      log(e);
+      throw e;
+    }
+
+    return listOfProducts.values.toList();
+
+//    List<Product> v = new List<Product>();
+//    List<ProductStateChange> b = new List<ProductStateChange>();
+//    b.add(ProductStateChange(null, ProductState.created, DateTime.now()));
+//    v.add(Product(null, "avocado", b));
+//    return v;
   }
 
   static DbWidget of(BuildContext context) {
@@ -119,7 +170,7 @@ class ProductWidget extends StatefulWidget {
 class _ProductWidgetState extends State<ProductWidget> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  List<Product> _products = new List<Product>();
+  List<Product> _products = List<Product>();
   final _formKey = GlobalKey<FormState>();
   final DateFormat _dateFormat = DateFormat("d MMM HH:mm");
 
@@ -377,7 +428,13 @@ class Product {
 
   @override
   int get hashCode => _id.hashCode ^ _name.hashCode ^ _stateLog.hashCode;
+
+  @override
+  String toString() {
+    return 'Product{_id: $_id, _name: $_name, _stateLog: $_stateLog}';
+  }
 }
+
 
 enum ProductState {
   //using enum value position for sorting
@@ -412,10 +469,26 @@ class ProductStateChange {
   int get hashCode => _id.hashCode ^ _state.hashCode ^ _at.hashCode;
 
   String toString() {
-    return '$_state, at $_at';
+    return '{$_id, $_state, at $_at}';
   }
 }
 
 void log(Object o) {
   print(DateTime.now().toIso8601String() + " " + o.toString());
+}
+
+ProductState getState(String state) {
+  switch (state) {
+    case "new":
+      return ProductState.created;
+      break;
+    case "active":
+      return ProductState.active;
+      break;
+    case "notActive":
+      return ProductState.notActive;
+      break;
+    default:
+      throw new Exception("not expected StateChange value $state");
+  }
 }
