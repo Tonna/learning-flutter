@@ -24,25 +24,25 @@ class DBProvider {
     return await openDatabase(
       join(await getDatabasesPath(), 'shopping_list.db'),
       onOpen: (db) {
-        db.delete("product");
-        db.delete("product_state_change");
-        db.delete("product_product_state_change_link");
-
-        db.execute(
-            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
-        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
-        db.execute(
-            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
-        db.execute(
-            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (2,'new','2020-04-04T10:00:00.123Z')");
-        db.execute(
-            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (3,'active','2020-04-04T12:50:00.123Z')");
-        db.execute(
-            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
-        db.execute(
-            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,2)");
-        db.execute(
-            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,3)");
+//        db.delete("product");
+//        db.delete("product_state_change");
+//        db.delete("product_product_state_change_link");
+//
+//        db.execute(
+//            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
+//        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
+//        db.execute(
+//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'notActive','2004-01-01T02:34:56.123Z')");
+//        db.execute(
+//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (2,'notActive','2020-04-04T10:00:00.123Z')");
+//        db.execute(
+//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (3,'active','2020-04-04T12:50:00.123Z')");
+//        db.execute(
+//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
+//        db.execute(
+//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,2)");
+//        db.execute(
+//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,3)");
       },
       onCreate: (db, version) {
         db.execute(
@@ -156,7 +156,7 @@ class DBProvider {
     int productId =
     await db.rawInsert("insert into product (name) values(?)", [name]);
     var productStateChange =
-    await addProductStateChange(ProductState.created, productId);
+    await addProductStateChange(ProductState.active, productId);
 
     return Product(productId, name, [productStateChange]);
   }

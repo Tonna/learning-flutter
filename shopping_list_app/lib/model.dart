@@ -38,7 +38,6 @@ enum ProductState {
   //using enum value position for sorting
   //TODO come up with better, less implicit solution
   active,
-  created,
   notActive
 }
 
@@ -73,9 +72,6 @@ class ProductStateChange {
 
 ProductState getStateObject(String state) {
   switch (state) {
-    case "new":
-      return ProductState.created;
-      break;
     case "active":
       return ProductState.active;
       break;
@@ -89,9 +85,6 @@ ProductState getStateObject(String state) {
 
 String getStateString(ProductState state) {
   switch (state) {
-    case ProductState.created:
-      return "new";
-      break;
     case ProductState.active:
       return "active";
       break;

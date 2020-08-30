@@ -1,3 +1,4 @@
 void log(Object o) {
-  print(DateTime.now().toIso8601String() + " " + o.toString());
+  //TODO add debug flag or something
+  //print(DateTime.now().toIso8601String() + " " + o.toString());
 }

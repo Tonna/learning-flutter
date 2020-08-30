@@ -101,19 +101,23 @@ class _ProductWidgetState extends State<ProductWidget> {
                               " at " +
                               _dateFormat
                                   .format(currentProduct.stateLog.last.at))),
-                          trailing: Icon(
-                              isActive ? Icons.shopping_basket : Icons.looks),
-                          onTap: () {
-                            setState(() {
-                              if (isActive) {
-                                _addStateChange(context, ProductState.notActive,
-                                    currentProduct.id);
-                              } else {
-                                _addStateChange(context, ProductState.active,
-                                    currentProduct.id);
-                              }
-                            });
-                          },
+                          trailing: IconButton(
+                            icon: Icon(
+                                isActive ? Icons.shopping_basket : Icons.looks),
+                            onPressed: () {
+                              setState(() {
+                                if (isActive) {
+                                  _addStateChange(
+                                      context,
+                                      ProductState.notActive,
+                                      currentProduct.id);
+                                } else {
+                                  _addStateChange(context, ProductState.active,
+                                      currentProduct.id);
+                                }
+                              });
+                            },
+                          ),
                         ));
                   });
             } else {
@@ -210,9 +214,6 @@ class _ProductWidgetState extends State<ProductWidget> {
 
   String getPrintableState(ProductState state) {
     switch (state) {
-      case ProductState.created:
-        return "new";
-        break;
       case ProductState.active:
         return "to buy";
         break;
