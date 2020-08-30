@@ -25,6 +25,8 @@ class DbWidget extends InheritedWidget {
   Database _database;
   String _databasesPath;
 
+  final DateFormat _dateIsoFormat = DateFormat("yyyy-mm-dd HH:mm:SS.sss");
+
   Database get database => _database;
 
   DbWidget({Key key, @required Widget child})
@@ -126,7 +128,7 @@ class DbWidget extends InheritedWidget {
         }
         listOfStateChanges[element['product_id']].add(ProductStateChange(
             element['change_state_id'],
-            getState(element['new_state']),
+            getStateObject(element['new_state']),
             DateTime.parse(element['state_changed_at'])));
       });
       log(listOfStateChanges);
@@ -147,17 +149,51 @@ class DbWidget extends InheritedWidget {
     }
 
     return listOfProducts.values.toList();
+  }
 
-//    List<Product> v = new List<Product>();
-//    List<ProductStateChange> b = new List<ProductStateChange>();
-//    b.add(ProductStateChange(null, ProductState.created, DateTime.now()));
-//    v.add(Product(null, "avocado", b));
-//    return v;
+  Future<Product> addNewProduct(String name) async {
+    log(_database);
+    log(name);
+    //TODO extract specific values, abstract this code
+    int productId = await _database
+        .rawInsert("insert into product (name) values(?)", [name]);
+    var productStateChange =
+        await addProductStateChange(ProductState.created, productId);
+
+    return Product(productId, name, [productStateChange]);
+  }
+
+  Future<ProductStateChange> addProductStateChange(
+      ProductState state, int productId) async {
+    log(_database);
+    //TODO extract time creation later
+    try {
+      var when = DateTime.now();
+      int stateChangeId = await _database.rawInsert(
+          "insert into product_state_change (new_state, changed_at) values(?, ?)",
+          [getStateString(state), when.toIso8601String()]);
+
+      await _database.rawInsert(
+          "insert into product_product_state_change_link (product_id, product_state_change_id) values(?, ?)",
+          [productId, stateChangeId]);
+      return ProductStateChange(stateChangeId, state, when);
+    } catch (e) {
+      log(e);
+      throw e;
+    }
   }
 
   static DbWidget of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<DbWidget>();
+    var dbWidget = context.dependOnInheritedWidgetOfExactType<DbWidget>();
+    log("dbWidget start");
+
+    log(StackTrace.current);
+    log("dbWidget " + dbWidget.hashCode.toString());
+    log(dbWidget.database);
+    log("dbWidget end");
+    return dbWidget;
   }
+
 }
 
 class ProductWidget extends StatefulWidget {
@@ -185,7 +221,6 @@ class _ProductWidgetState extends State<ProductWidget> {
   _showSnackBar(BuildContext context, String content, {bool error = false}) {
     log("1: $_loadedDatabasePath 2: $_openedDatabase 3: $_listLoaded database is null: ${DbWidget.of(context).database == null}");
 
-    //print(content);
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content:
           Text('${error ? "An unexpected error occured: " : ""}${content}'),
@@ -226,8 +261,39 @@ class _ProductWidgetState extends State<ProductWidget> {
       DbWidget.of(context).loadListOfProducts().then((list) {
         _products = list;
         _listLoaded = true;
+        //_addProduct(context, "test");
+        sortProducts();
+        setState(() {});
       }).catchError((error) {
         log("loadList catch error");
+        _showSnackBar(context, error.toString(), error: true);
+      });
+    } catch (e) {
+      _showSnackBar(context, e.toString(), error: true);
+    }
+  }
+
+  _addProduct(BuildContext context, String name) {
+    try {
+      DbWidget.of(context).addNewProduct(name).then((product) {
+        _products.add(product);
+        sortProducts();
+        setState(() {});
+      }).catchError((error) {
+        _showSnackBar(context, error.toString(), error: true);
+      });
+    } catch (e) {
+      _showSnackBar(context, e.toString(), error: true);
+    }
+  }
+
+  _addStateChange(BuildContext context, ProductState newState, int productId) {
+    try {
+      DbWidget.of(context).addProductStateChange(newState, productId).then((state) {
+        _products.firstWhere((element) => element.id == productId).stateLog.add(state);
+        sortProducts();
+        setState(() {});
+      }).catchError((error) {
         _showSnackBar(context, error.toString(), error: true);
       });
     } catch (e) {
@@ -254,9 +320,11 @@ class _ProductWidgetState extends State<ProductWidget> {
         !_listLoaded) {
       _loadList(context);
       log("products loaded from db???");
+      log(DbWidget.of(context).hashCode);
     }
 
     return new Scaffold(
+      key: _scaffoldKey,
       appBar: new AppBar(
         title: new Text("Products list"),
       ),
@@ -281,20 +349,22 @@ class _ProductWidgetState extends State<ProductWidget> {
                   onTap: () {
                     setState(() {
                       if (isActive) {
-                        currentProduct.stateLog.add(ProductStateChange(
-                            null, ProductState.notActive, DateTime.now()));
-                        sortProducts();
+                        _addStateChange(context, ProductState.notActive, currentProduct.id);
+                        //currentProduct.stateLog.add(ProductStateChange(
+                        //    null, ProductState.notActive, DateTime.now()));
+                       // sortProducts();
                       } else {
-                        currentProduct.stateLog.add(ProductStateChange(
-                            null, ProductState.active, DateTime.now()));
-                        sortProducts();
+                        _addStateChange(context, ProductState.active, currentProduct.id);
+//                        currentProduct.stateLog.add(ProductStateChange(
+//                            null, ProductState.active, DateTime.now()));
+                       // sortProducts();
                       }
                     });
                   },
                 ));
           }),
       floatingActionButton: new FloatingActionButton(
-        onPressed: () => _addSomethingDialog(context),
+        onPressed: () => _addProductDialog(context),
         backgroundColor: Colors.pinkAccent,
         child: new Icon(Icons.add),
       ),
@@ -312,18 +382,18 @@ class _ProductWidgetState extends State<ProductWidget> {
     });
   }
 
-  Product createDataObjectFromFormData() {
-    var list = new List<ProductStateChange>();
-    list.add(
-        new ProductStateChange(null, ProductState.created, DateTime.now()));
-    return new Product(null, _productNameTextController.text, list);
-  }
+//  Product createDataObjectFromFormData() {
+//    var list = new List<ProductStateChange>();
+//    list.add(
+//        new ProductStateChange(null, ProductState.created, DateTime.now()));
+//    return new Product(null, _productNameTextController.text, list);
+//  }
 
   void clearFormData() {
     _productNameTextController.clear();
   }
 
-  void _addSomethingDialog(BuildContext context) async {
+  void _addProductDialog(BuildContext context) async {
     Product _newProduct;
 
     List<Widget> formWidgetList = new List();
@@ -334,7 +404,9 @@ class _ProductWidgetState extends State<ProductWidget> {
       RaisedButton(
         onPressed: () {
           if (_formKey.currentState.validate()) {
-            _products.add(createDataObjectFromFormData());
+            //_products.add(createDataObjectFromFormData());
+            _addProduct(context, _productNameTextController.text);
+
             sortProducts();
             clearFormData();
             Navigator.pop(context);
@@ -418,6 +490,10 @@ class Product {
 
   List<ProductStateChange> get stateLog => _stateLog;
 
+  Map<String, dynamic> toMap() {
+    return {'id': _id, 'name': _name};
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -434,7 +510,6 @@ class Product {
     return 'Product{_id: $_id, _name: $_name, _stateLog: $_stateLog}';
   }
 }
-
 
 enum ProductState {
   //using enum value position for sorting
@@ -477,7 +552,7 @@ void log(Object o) {
   print(DateTime.now().toIso8601String() + " " + o.toString());
 }
 
-ProductState getState(String state) {
+ProductState getStateObject(String state) {
   switch (state) {
     case "new":
       return ProductState.created;
@@ -487,6 +562,22 @@ ProductState getState(String state) {
       break;
     case "notActive":
       return ProductState.notActive;
+      break;
+    default:
+      throw new Exception("not expected StateChange value $state");
+  }
+}
+
+String getStateString(ProductState state) {
+  switch (state) {
+    case ProductState.created:
+      return "new";
+      break;
+    case ProductState.active:
+      return "active";
+      break;
+    case ProductState.notActive:
+      return "notActive";
       break;
     default:
       throw new Exception("not expected StateChange value $state");
