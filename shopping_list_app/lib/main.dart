@@ -49,9 +49,6 @@ class _ProductWidgetState extends State<ProductWidget> {
   _addProduct(BuildContext context, String name) async {
     try {
       DBProvider.db.addNewProduct(name);
-      //  _products = await DBProvider.db.loadListOfProducts();
-      //  sortProducts();
-      //setState(() {});
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
@@ -61,10 +58,6 @@ class _ProductWidgetState extends State<ProductWidget> {
       BuildContext context, ProductState newState, int productId) async {
     try {
       DBProvider.db.addProductStateChange(newState, productId);
-      // _products = await DBProvider.db.loadListOfProducts();
-
-//      sortProducts();
-      // setState(() {});
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
@@ -79,8 +72,6 @@ class _ProductWidgetState extends State<ProductWidget> {
   @override
   Widget build(BuildContext context) {
     log("build");
-
-    getCurrentClients();
 
     return new Scaffold(
       key: _scaffoldKey,
@@ -126,7 +117,7 @@ class _ProductWidgetState extends State<ProductWidget> {
                         ));
                   });
             } else {
-              return Text("that sucks");
+              return Center(child: CircularProgressIndicator());
             }
           }),
       floatingActionButton: new FloatingActionButton(
@@ -147,13 +138,6 @@ class _ProductWidgetState extends State<ProductWidget> {
       return statusComparison;
     });
   }
-
-//  Product createDataObjectFromFormData() {
-//    var list = new List<ProductStateChange>();
-//    list.add(
-//        new ProductStateChange(null, ProductState.created, DateTime.now()));
-//    return new Product(null, _productNameTextController.text, list);
-//  }
 
   void clearFormData() {
     _productNameTextController.clear();
