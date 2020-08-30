@@ -42,86 +42,92 @@ class _ProductWidgetState extends State<ProductWidget> {
   _showSnackBar(BuildContext context, String content, {bool error = false}) {
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content:
-      Text('${error ? "An unexpected error occured: " : ""}${content}'),
+          Text('${error ? "An unexpected error occured: " : ""}${content}'),
     ));
   }
 
   _addProduct(BuildContext context, String name) async {
     try {
       DBProvider.db.addNewProduct(name);
-      _products = await DBProvider.db.loadListOfProducts();
-      sortProducts();
-      setState(() {});
+      //  _products = await DBProvider.db.loadListOfProducts();
+      //  sortProducts();
+      //setState(() {});
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
   }
 
-  _addStateChange(BuildContext context, ProductState newState,
-      int productId) async {
+  _addStateChange(
+      BuildContext context, ProductState newState, int productId) async {
     try {
       DBProvider.db.addProductStateChange(newState, productId);
-      _products = await DBProvider.db.loadListOfProducts();
+      // _products = await DBProvider.db.loadListOfProducts();
 
-      sortProducts();
-      setState(() {});
+//      sortProducts();
+      // setState(() {});
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
   }
 
-  Future asdfasdfsad() async {
-     _products = await DBProvider.db.loadListOfProducts();
+  Future<List<Product>> getCurrentClients() async {
+    _products = await DBProvider.db.loadListOfProducts();
+    sortProducts();
+    return _products;
   }
 
   @override
   Widget build(BuildContext context) {
     log("build");
 
-    //TODO clean up state mess. use correct way to determine that database is ok to use
-     asdfasdfsad();
+    getCurrentClients();
 
     return new Scaffold(
       key: _scaffoldKey,
       appBar: new AppBar(
         title: new Text("Products list"),
       ),
-      body: ListView.builder(
-          itemCount: _products.length,
-          itemBuilder: (context, index) {
-            var currentProduct = _products[index];
-            var currentProductState = currentProduct.stateLog.last.state;
-            var isActive = currentProductState == ProductState.active;
-            return Container(
-                color: isActive ? Colors.red : Colors.white,
-                child: ListTile(
-                  title: Text(currentProduct.name),
-                  leading:
-                  Text((_products.indexOf(currentProduct) + 1).toString()),
-                  subtitle: (Text(
-                      getPrintableState(currentProduct.stateLog.last.state) +
-                          " at " +
-                          _dateFormat.format(currentProduct.stateLog.last.at))),
-                  trailing:
-                  Icon(isActive ? Icons.shopping_basket : Icons.looks),
-                  onTap: () {
-                    setState(() {
-                      if (isActive) {
-                        _addStateChange(
-                            context, ProductState.notActive, currentProduct.id);
-                        //currentProduct.stateLog.add(ProductStateChange(
-                        //    null, ProductState.notActive, DateTime.now()));
-                        // sortProducts();
-                      } else {
-                        _addStateChange(
-                            context, ProductState.active, currentProduct.id);
-//                        currentProduct.stateLog.add(ProductStateChange(
-//                            null, ProductState.active, DateTime.now()));
-                        // sortProducts();
-                      }
-                    });
-                  },
-                ));
+      body: FutureBuilder<List<Product>>(
+          future: getCurrentClients(),
+          builder:
+              (BuildContext context, AsyncSnapshot<List<Product>> snapshot) {
+            if (snapshot.hasData) {
+              return ListView.builder(
+                  itemCount: _products.length,
+                  itemBuilder: (context, index) {
+                    var currentProduct = _products[index];
+                    var currentProductState =
+                        currentProduct.stateLog.last.state;
+                    var isActive = currentProductState == ProductState.active;
+                    return Container(
+                        color: isActive ? Colors.red : Colors.white,
+                        child: ListTile(
+                          title: Text(currentProduct.name),
+                          leading: Text((_products.indexOf(currentProduct) + 1)
+                              .toString()),
+                          subtitle: (Text(getPrintableState(
+                                  currentProduct.stateLog.last.state) +
+                              " at " +
+                              _dateFormat
+                                  .format(currentProduct.stateLog.last.at))),
+                          trailing: Icon(
+                              isActive ? Icons.shopping_basket : Icons.looks),
+                          onTap: () {
+                            setState(() {
+                              if (isActive) {
+                                _addStateChange(context, ProductState.notActive,
+                                    currentProduct.id);
+                              } else {
+                                _addStateChange(context, ProductState.active,
+                                    currentProduct.id);
+                              }
+                            });
+                          },
+                        ));
+                  });
+            } else {
+              return Text("that sucks");
+            }
           }),
       floatingActionButton: new FloatingActionButton(
         onPressed: () => _addProductDialog(context),
@@ -134,7 +140,7 @@ class _ProductWidgetState extends State<ProductWidget> {
   void sortProducts() {
     _products.sort((a, b) {
       var statusComparison =
-      a.stateLog.last.state.index.compareTo(b.stateLog.last.state.index);
+          a.stateLog.last.state.index.compareTo(b.stateLog.last.state.index);
       if (statusComparison == 0) {
         return a.name.compareTo(b.name);
       }
@@ -164,10 +170,8 @@ class _ProductWidgetState extends State<ProductWidget> {
       RaisedButton(
         onPressed: () {
           if (_formKey.currentState.validate()) {
-            //_products.add(createDataObjectFromFormData());
             _addProduct(context, _productNameTextController.text);
-
-            sortProducts();
+            setState(() => {});
             clearFormData();
             Navigator.pop(context);
           }
