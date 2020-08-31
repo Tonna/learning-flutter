@@ -51,43 +51,43 @@ class DBProvider {
             "CREATE TABLE `product_product_state_change_link` ( `product_id` INTEGER, `product_state_change_id` INTEGER, PRIMARY KEY(`product_id`,`product_state_change_id`))");
         db.execute(
             "CREATE TABLE `product_state_change` ( `id` INTEGER, `new_state` TEXT NOT NULL, `changed_at` TEXT NOT NULL, PRIMARY KEY(`id`) )");
-
-        db.execute(
-            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
-        db.execute(
-            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'new','2004-01-01T02:34:56.123Z')");
-        db.execute(
-            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
+//
+//        db.execute(
+//            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
+//        db.execute(
+//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'active','2004-01-01T02:34:56.123Z')");
+//        db.execute(
+//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
       },
       version: 1,
     );
   }
 
   Future<List<Product>> loadListOfProducts() async {
-    log("loadList start");
+   // log("loadList start");
 
     final Database db = await database;
 
-    final List<Map<String, dynamic>> products = await db.query("product");
-    log(products);
-
-    final List<Map<String, dynamic>> state_change =
-    await db.query("product_state_change");
-    log(state_change);
-
-    final List<Map<String, dynamic>> links =
-    await db.query("product_product_state_change_link");
-    log(links);
-
-    log("loadList ended");
+//    final List<Map<String, dynamic>> products = await db.query("product");
+//    log(products);
+//
+//    final List<Map<String, dynamic>> state_change =
+//        await db.query("product_state_change");
+//    log(state_change);
+//
+//    final List<Map<String, dynamic>> links =
+//        await db.query("product_product_state_change_link");
+//    log(links);
+//
+//    log("loadList ended");
 
     List<Map<String, dynamic>> list = await db.rawQuery(
         "select p.id as product_id, p.name as product_name, c.id as change_state_id, c.new_state as new_state, c.changed_at as state_changed_at"
-            " from product p"
-            " join product_product_state_change_link l"
-            " on p.id == l.product_id"
-            " join product_state_change c"
-            " on c.id == l.product_state_change_id");
+        " from product p"
+        " join product_product_state_change_link l"
+        " on p.id == l.product_id"
+        " join product_state_change c"
+        " on c.id == l.product_state_change_id");
     //TODO add order by and stuff to reduce work
     log(list);
 
@@ -126,8 +126,8 @@ class DBProvider {
     return listOfProducts.values.toList();
   }
 
-  Future<ProductStateChange> addProductStateChange(ProductState state,
-      int productId) async {
+  Future<ProductStateChange> addProductStateChange(
+      ProductState state, int productId) async {
     final Database db = await database;
     log(db);
     //TODO extract time creation later
@@ -154,9 +154,9 @@ class DBProvider {
     log(name);
     //TODO extract specific values, abstract this code
     int productId =
-    await db.rawInsert("insert into product (name) values(?)", [name]);
+        await db.rawInsert("insert into product (name) values(?)", [name]);
     var productStateChange =
-    await addProductStateChange(ProductState.active, productId);
+        await addProductStateChange(ProductState.active, productId);
 
     return Product(productId, name, [productStateChange]);
   }

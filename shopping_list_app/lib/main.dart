@@ -63,73 +63,113 @@ class _ProductWidgetState extends State<ProductWidget> {
     }
   }
 
-  Future<List<Product>> getCurrentClients() async {
+  Future<List<Product>> getAllProducts() async {
     _products = await DBProvider.db.loadListOfProducts();
     sortProducts();
     return _products;
+  }
+
+  Future<List<Product>> getActive() async {
+    _products = await DBProvider.db.loadListOfProducts();
+    sortProducts();
+    var afasdfasd = _products
+        .where((element) => element.stateLog.last.state == ProductState.active).toList();
+
+    if (afasdfasd.isEmpty) {
+      return [];
+    }
+    return afasdfasd;
+  }
+
+  Future<List<Product>> getNotActive() async {
+    try {
+      _products = await DBProvider.db.loadListOfProducts();
+      sortProducts();
+      var afasdfasd = _products.where(
+          (element) => element.stateLog.last.state == ProductState.notActive).toList();
+      if (afasdfasd.isEmpty) {
+        return [];
+      }
+      return afasdfasd;
+    } catch (e) {
+      log(e);
+      throw e;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     log("build");
 
-    return new Scaffold(
-      key: _scaffoldKey,
-      appBar: new AppBar(
-        title: new Text("Products list"),
-      ),
-      body: FutureBuilder<List<Product>>(
-          future: getCurrentClients(),
-          builder:
-              (BuildContext context, AsyncSnapshot<List<Product>> snapshot) {
-            if (snapshot.hasData) {
-              return ListView.builder(
-                  itemCount: _products.length,
-                  itemBuilder: (context, index) {
-                    var currentProduct = _products[index];
-                    var currentProductState =
-                        currentProduct.stateLog.last.state;
-                    var isActive = currentProductState == ProductState.active;
-                    return Container(
-                        color: isActive ? Colors.red : Colors.white,
-                        child: ListTile(
-                          title: Text(currentProduct.name),
-                          leading: Text((_products.indexOf(currentProduct) + 1)
-                              .toString()),
-                          subtitle: (Text(getPrintableState(
-                                  currentProduct.stateLog.last.state) +
-                              " at " +
-                              _dateFormat
-                                  .format(currentProduct.stateLog.last.at))),
-                          trailing: IconButton(
-                            icon: Icon(
-                                isActive ? Icons.shopping_basket : Icons.looks),
-                            onPressed: () {
-                              setState(() {
-                                if (isActive) {
-                                  _addStateChange(
-                                      context,
-                                      ProductState.notActive,
-                                      currentProduct.id);
-                                } else {
-                                  _addStateChange(context, ProductState.active,
-                                      currentProduct.id);
-                                }
-                              });
-                            },
-                          ),
-                        ));
-                  });
-            } else {
-              return Center(child: CircularProgressIndicator());
-            }
-          }),
-      floatingActionButton: new FloatingActionButton(
-        onPressed: () => _addProductDialog(context),
-        backgroundColor: Colors.pinkAccent,
-        child: new Icon(Icons.add),
-      ),
-    );
+    Map<String, FutureBuilder<List<Product>>> qsder = {
+      "all": getGodWidget(getAllProducts()),
+      "to buy": getGodWidget(getActive()),
+      "enough": getGodWidget(getNotActive())
+    };
+    return DefaultTabController(
+        length: qsder.length,
+        child: Scaffold(
+          key: _scaffoldKey,
+          appBar: new AppBar(
+              title: new Text("Products list"),
+              bottom: TabBar(
+                  isScrollable: false,
+                  tabs: qsder.keys.map((a) => Text(a)).toList())),
+          body: TabBarView(
+              children: [for (final t in qsder.values) Container(child: t)]),
+          floatingActionButton: new FloatingActionButton(
+            onPressed: () => _addProductDialog(context),
+            backgroundColor: Colors.pinkAccent,
+            child: new Icon(Icons.add),
+          ),
+        ));
+  }
+
+  FutureBuilder<List<Product>> getGodWidget(
+      Future<List<Product>> selectedProducts) {
+    return FutureBuilder<List<Product>>(
+        future: selectedProducts,
+        builder: (BuildContext context, AsyncSnapshot<List<Product>> snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+                itemCount: snapshot.requireData.length,
+                itemBuilder: (context, index) {
+                  var currentProduct = snapshot.requireData[index];
+                  var currentProductState = currentProduct.stateLog.last.state;
+                  var isActive = currentProductState == ProductState.active;
+                  return Container(
+                      color: isActive ? Colors.red : Colors.white,
+                      child: ListTile(
+                        title: Text(currentProduct.name),
+                        leading: Text(
+                            (snapshot.requireData.indexOf(currentProduct) + 1)
+                                .toString()),
+                        subtitle: (Text(getPrintableState(
+                                currentProduct.stateLog.last.state) +
+                            " at " +
+                            _dateFormat
+                                .format(currentProduct.stateLog.last.at))),
+                        trailing: IconButton(
+                          icon: Icon(
+                              isActive ? Icons.shopping_basket : Icons.looks),
+                          onPressed: () {
+                            setState(() {
+                              if (isActive) {
+                                _addStateChange(context, ProductState.notActive,
+                                    currentProduct.id);
+                              } else {
+                                _addStateChange(context, ProductState.active,
+                                    currentProduct.id);
+                              }
+                            });
+                          },
+                        ),
+                      ));
+                });
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        });
   }
 
   void sortProducts() {
