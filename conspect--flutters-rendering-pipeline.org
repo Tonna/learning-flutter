@@ -1,0 +1,423 @@
+https://www.youtube.com/watch?v=UUfXWzp0-DU
+
+
+
+
+* raw subtitles
+  :PROPERTIES:
+  :CREATED:  [2020-09-06 Sun 12:04]
+  :CUSTOM_ID: 2a02a015-0c8f-431c-a423-ab2dafe7395c
+  :END:
+
+ADAM BARTH
+
+00:41\\
+And this talk is going to be about the rendering pipeline in Flutter.
+
+01:18\\
+This talk is one of the-- about one of the lower levels in the framework called the rendering layer, which is responsible for organizing the screen, so allocating space on the screen for various different widgets and then actually making those widgets appear on-screen.
+
+01:36\\
+So the full pipeline in Flutter has a lot of steps in it.
+And so first you get some user input, like the user touches the screen.
+Then maybe you have some animations running so they start ticking.
+And then you get a chance to build widgets. So you get to build whatever you want to have on your screen [...]\\
+02:05\\
+And then after that you could go to the rendering phase of the pipeline which consists itself of three steps. 
+So first is the layout step, which is about positioning and sizing elements on the screen.
+Then there's the painting step, which is about figuring out what those elements actually look like. 
+And the compositing step basically stacks them together in draw order so that they can be composed on the screen as one thing.\\
+02:28\\
+And then finally, the last step there is rasterization where you actually go from that abstract representation of what you're going to draw to the actual physical pixels that are going to appear on-screen.\\
+02:37\\
+So this talk is going to focus on layout, painting, and compositing.
+
+02:44\\
+So the thesis or the design principle behind the rendering part of the pipeline is that simple is fast.
+So basically, if we use simple, straightforward algorithms with very well understood properties then we could make them go fast by taking advantage of those properties and optimizing them.\\
+03:01\\
+So for example, *both layout and painting use a one-pass linear timed algorithm*. So we walk the tree from top to bottom, and then we return up the recursive structure and that's it.
+So that's in contrast to other systems, for example, where they'll do multi-pass layout, where they'll go to a point in the tree, they walk down to gather some information, and then walk down again to adjust the sizes of things.
+And if you imagine nesting that, you can see very quickly how that becomes N squared work, because you keep recursively walking down the tree and back up.
+And so in this system, we want to have a one-pass layout that just walk the tree once, touch every node once on the way down, once on the way up, and then could figure out how big and where everything should be with that.
+
+03:42\\
+The other, along the same lines is we use a very simple constraint model to do layout.
+So for example, in UI kit this complicated linear constraint model and a whole general purpose constraint solver to figure out where to position things. And that's-- that has some benefits, but we thought what if we could do something much simpler.
+So our *constraint model is basically a box with a min width and a min height, and a max width and a max height.* 
+And that constraint domain is very easy to solve. If I give you two of those constraints and ask you to unify them, pretty obvious how to unify them. And so, you can write a very simple constraint solver.
+And the question is-- our thesis is that's enough to generate very expressive layouts.
+
+04:22\\
+And finally, we do all of our repainting structurally.
+*So instead of tracking which rectangles on the screen are invalid and need to be repainted, we do it structurally in the same structure that the overall tree has.*
+So we can say this sub-tree, it needs to be repainted, as opposed to keeping track of which rectangles on the screen.
+And that turns out to be a very big performance win. It takes advantage of some of the hardware capabilities in modern mobile devices. They're very good at compositing things.
+
+04:54\\
+So the first phase I want to talk about is layout. How does layout work?
+*So the base class that everything that [? puts space in ?] layout and painting uses is called render object.* So RenderObject itself is a pretty abstract concept. *Basically, it has an owner, which is the object that's going to drive the pipeline. And each RenderObject knows what its parent is. But in general, a RenderObject doesn't know anything about its children. All it knows how to do is visit its children, which means different RenderObjects are free to have different child models.*\\
+05:23\\
+So for example, you can have a RenderObject that has a single unique child, or a RenderObject that
+has a list of children, or a RenderObject that has several named children.
+And from the perspective of all the rest of the algorithms, we don't care what the child model is.
+It's totally up to the RenderObject.\\
+05:39\\
+But it does know how to layout and paint in abstract ways.
+And importantly, *there's this concept called parent data, which is a slot on a RenderObject that the parent RenderObject can store data.*\\
+05:49\\
+So if you're familiar with other systems like the web, you aren't allowed to put an inline inside of a block, for example, because block needs to store information on its children that inline doesn't have slots to store. And so, you get these anonymous RenderObjects in your render tree on the web to basically convert the data structures.
+And so, we avoid that just by having this parent data slot that's managed by the parent instead of by the child. And that'll become important when we talk about positioning.\\
+06:18\\
+*So importantly about RenderObjects, there's no concept of any coordinate systems or anything like that. It just knows that it exists in a tree and has a parent.* And it defines this data flow that I talked about. *So this is the one-pass data flow. So we walk the tree in a depth first traversal. And we pass down the recursive walk constraints.*
+So from RenderObject's point of view, there are arbitrary constraints. In practice, most people use a thing called a render box. So those boxes will be this box constraint that I talked about.\\
+06:51\\
+*And then up from the bottom of the tree comes the size.*
+So I say here are the constraints on how big you are supposed to be. And you say thank you for those constraints. I'm going to go talk to my children for a little while. And when I'm done, I'm going to go
+respond and say oh, I figured out I want it to be exactly this size.
+
+07:13\\
+So that's sort of abstract, but more concretely it turns out that a very useful coordinate system to work in is Cartesian coordinates, so x and y, and width and height. *So there's a specialization of a RenderObject called RenderBox that is much more opinionated about how things are sized and positioned. In particular, it has a size which is a width and height, as opposed to a RenderObject can be an arbitrary thing like a sector on a circle or something.* It also adds some intrinsic sizing information, which is it comes up in some esoteric cases.\\
+07:50\\
+So a box has the idea that we're going to use a particular kind of constraints, these box constraints that I've mentioned. So a box constraint is basically what's depicted on this slide.  *So there's-- in the width dimension there's a min and a max, and in the height dimension there's a min and a max.* And the rule is, if the parent gives you these constraints, you have to be somewhere in this light gray region. *You aren't allowed to be too small and you aren't allowed to be too big.*\\
+08:13\\
+And what's interesting about this is that you can actually express a lot of different layout algorithms using this simple box constraints. So for example, the simplest kind of layout algorithm is basically where the parent determines the child--the size of the child. 
+So if you imagine, you only had a downward information. So each parent was like OK, you're going to be exactly 100 pixels by 200 pixels, and the child was like OK. The first child, you're going to 50 by 50, and you're going to be 50 by 100.\\
+08:53\\
+And you can actually model that with box constraints. What you do is you make the constraints tight. So you set the min and the max width to the same value, and the min and the max height to the same value. So the child is basically dictated, you have to be exactly this big, because that's the only value that satisfies the constraints.\\
+09:09\\
+*So what this implies is that any object in the system has to be prepared for its parent to dictate exactly how big it is.*
+So for example, the checkbox widget, normally you'd think a checkbox widget has a fixed size. It can only be exactly this size. But it turns out in this system, since the parent can force it to be an arbitrary size, it has to think about that and understand what would it mean for me to be twice as big as I expected. And so the checkbox does something simple, like he centers his little checkbox in that available space, but he's able to occupy arbitrary space.
+
+09:40\\
+*So another layout paradigm is called Width-In, Height-Out.*
+So this is, for example, what the web uses. This is a very useful paradigm for text. So basically you say, I want you to be exactly 200 pixels wide. How tall would you like to be?
+So if you could imagine you have a bunch of text and you set the width and you start flowing the text to make different line breaks. And then you see how many lines you got, and that's how much height you have.
+
+10:03\\
+*And so, that actually arises quite naturally in this model where you just set the width constraint to be tight and you set the height constraint to be loose. And then the parent is essentially specifying the width and the child gets to report the height that he wants to be.*
+
+10:17\\
+*What's interesting is actually because this model treats width and height, and basically x and y symmetrically, you get the opposite. You get Height-In, Width-Out, also arises naturally.* You could ask yourself why would I care about this? Why does this makes sense? And the longer I work on this project, the more I realize that whenever you have a horizontal use case, there's always a vertical use case that arises for the same thing. And so, later in the talk we'll see this actually arise naturally from something.
+
+10:53\\
+So I promised you I was going to tell you about parent data.
+So what's interesting, if you notice about RenderBox here, he knows his size but he doesn't know his position.
+So this is in contrast to other systems like Cocoa where each UI view in Cocoa knows it's [? wrecked, ?] and [? a wreck ?] combines both size and position.
+*So here you know your own size, but you don't know your position. Your position is here controlled by your parent, in your-- this opaque parent data field that you hold. So what that means is when the parent gets the sizes for all those children, he is then free to reposition them without talking to them again.* So without touching them he can move them around, and that turns out to be quite powerful for things like scrolling where you want to scroll a widget and move it around without touching it. You just want to do the minimal amount of work to translate things around.
+
+13:35\\
+*We have to ask them how big would you like to be, since they're allowed to have an opinion about how big they'd like to be. So what constraints should we give them?*
+So well, for their-- we're doing a row, so for their height it's pretty easy.
+They could either be zero height, or they can be as high as I'm allowed to be.
+If they're taller than I'm allowed to be, then I'm in trouble because I can't fit them inside of myself, so that's sort of natural.\\
+13:59\\
+And then the width, well, they're allowed to be as small as they want to be. That's up to them.\\
+14:03\\
+And then actually we let them be as wide as they want to be all the way out to infinity. And why infinity? [? Forest ?] has a puzzled look on his face, and that's a very good question. And so, actually in the first version of the system we didn't have an infinity here. We gave it the max width-- the incoming max width, so our own max width. But oh, that's natural.\\
+14:23\\
+But it turns out that causes a lot of subtle problems.
+*So if you imagine a child who doesn't really know how big he wants to be, he's looking for some guidance from you.*
+If you give him a max width, he'd be like, sounds great. I love that max width. I'll be exactly that wide. And what if you have two of those guys? Now you're out of space, so you can't really fit them.
+And for any value you pick here is either going to be too small-- meaning if they all pick that size you wouldn't fill up, or it'd be too big, so if they all picked that size they'd be too-- you'd overflow.
+And so there's actually no good value to give here. So we don't want to give zero, because then they would all have to be zero width. *So we give them infinity, which says I have no opinion. You have to tell me how big you are.*
+
+18:14\\
+The question is what happens if the inflexible children is too big.
+I told them they could be infinitely big and they all decided to be huge and I don't have space for them. What should I do?\\
+18:21\\
+Yeah, so it's fascinating.
+*What the box constraints really say is here's how much space you're allowed to occupy during layout*. So that doesn't say how big your children need to be.\\
+18:34\\
+So for example, *if your children are bigger that just means that they extend off the side.* So I could either paint them out there. *I don't have to paint within my bounds. Or what actually what we do is we clip them.* We say, OK, you're too big. I'm going to only draw the parts of you that are actually visible. So they occupy that much space but they-- you can't see them, because they're clipped away.
+
+19:35\\
+Oh, so I told you that-- so you'll notice that we have this Width-In, Height-Out property for the flexible children. We told them exactly how wide they were going to be, and then we asked them how tall they were going to be.\\
+19:44\\
+So if you imagine just rotating this thing to be a column, totally reasonable to have a flexible layout that's vertical. So now the flexible children in a vertical layout. You tell them their height and they tell you their width. *So it turns out we needed Height-In, Width-Out*, even though when we first saw that it seemed like a weird thing. But it actually arises quite naturally, just in vertical flex layouts.\\
+20:09\\
+And it turns out this constraint-based simple algorithm is sufficient to generate a lot of different layouts. In fact, we have a complete implementation of material design and all of its visual and layout properties just done with this algorithm.
+
+20:24\\
+It's kind of remarkable. So when we first started the project I was a little skeptical that these simple constraints would be enough. And that's why we-- one of the reasons why we have render object as this very general purpose thing. We thought, oh, we might need to specialize it to do some other kind of complicated thing. But it turns out, no, you can actually do everything you want just with this simple algorithm.
+
+20:49\\
+So what's neat about the algorithm being simple is now we can reason about it and exploit its properties to make things go fast.\\
+20:56\\
+So as an example, you notice at some point *I might give a child a tight constraint, which means the child has to be exactly a certain size.* And what that nicely does is it provides a cut in the data flow of the layout algorithm.\\
+21:12\\
+So if you imagine that this edge here that's labeled as a tight constraint says the child has to be exactly a certain size. Then whatever happens down in that sub-tree with respect to layout, can't possibly affect the rest of the tree, because his only communication with the rest of the tree is his size that he reported back up the algorithm.\\
+21:29\\
+But since his size has to be exactly the one that matches the constraint, there's no choice for his size. So whatever crazy layout thing is happening there, that information can't propagate to the rest of the tree. This creates what we call a re-layout boundary. And we compute these implicitly just from watching the algorithm, that constraints [? over-execute. ?]
+
+And so it basically says, if somebody in this sub-tree wants to change his size or position, that change is contained in the sub-tree. So when we produce that next frame, we only need to consult this sub-tree. We don't even need to touch the rest of the entire tree, and so that makes things much, much more efficient.
+
+So I said it was a linear algorithm. Actually, because of these properties it's actually sub-linear, because you don't even touch the parts of the tree that are isolated from the parts that undergo a layout.\\
+22:13\\
+And actually there are several different cases. So tight constraints are one case.\\
+22:17\\
+Another case that we recognize is when a child-- *when parent asks a child [? for the ?] layout, he supplies a flag that says whether he's going to use the child's size in the rest of this computation.* And if he says no, that also creates a relayout boundary, because then if the child changes size it doesn't affect anything else, because the parent didn't listen to the size. It was irrelevant from the parent's point of view.
+
+22:44\\
+*And another case is where a child can report that his size depends only on his incoming constraints.* So it's not-- he says, for example, a child that always expands to fill his constraints, he's sized by his parent. Whatever his parent told him is his constraints, he immediately knows what his size is. What his children do don't matter, and that also creates a relayout boundary.
+
+23:06\\
+And just from these three simple observations about the [? constraint solver ?] [? actually, ?] the incremental layouts in this system turn out to be really quite small, just as you naturally write widgets and naturally build up applications.
+
+23:26\\
+So you'll notice what order did we visit the children in our layout? Well, first we visited the inflexible children, and then we visited the flexible children. So that's in contrast to the order in which I'm going to paint my children.
+
+23:46\\
+*So I paint my children in order from left to right in the order they exist in the tree. But in layout, I visit them in a different order. So this is motivation for why you want painting to be a separate tree walk from layout, because you're going to visit the children in a different order.*\\
+24:00\\
+So that's in contrast to other systems that unify the layout and painting algorithms into one walk of the tree. They end up having to do these careful shenanigans to deal with the fact that the paint order is not always the same as the information flow order for the layout.\\
+24:17\\
+So here we do them as just separate walks, and that just-- each one is one linear walk of the whole tree from top to bottom-- conception.
+
+24:24\\
+AUDIENCE: And that matters if they're going to be overlapping or transparent or something like that?\\
+24:29\\
+ADAM BARTH: Yeah, so for example, *in this layout, they're all next to each other, but another layout besides a flex is a stack.* So a stack, [? it ?] just puts them all on top of each other, and so it really matters what order you paint them in. And they're also-- so a stack has positioned and non-positioned children. It similarly has to visit them at a funny order during layout,
+and non-positioned order.
+
+
+
+
+
+24:54\\
+Painting phase, so we figured out where everything is and how big it is, but we haven't figured out what it looks like, which is sort of only half the battle as G.I. Joe would say.\\
+25:05\\
+So how do we paint?\\
+25:06\\
+Well, we say, oh, paint's really easy. You just walk the whole tree in depth first order, and you pass around your offset, so where you are on the screen. And then you tell each thing to just paint itself there, because we already know where it is and how big it is. There's not that much choice. It just has to draw. Simple, one slide. Not quite.\\
+25:27\\
+*So the complication with painting is that we have to deal with layers. So if you were painting everything to one buffer, then that would be the end of the story. But it turns out that painting things to one buffer is very constraining.*\\
+25:40\\
+So for example, suppose you had a-- suppose this yellow thing in here was a video. So it's something that's going to be drawn by some other part of the system that you don't interact. There's some hardware video codec that's just going to write video textures and then you're going to draw them. And you want to draw some things behind the video and some things on top of the video. It means you have to divide up your drawing into two different pieces, the part that's below the video and the part that's above, so later, when you're compositing the video, then everything looks correct. So for example, you could draw a play button on top of [? the video. ?]
+
+26:13\\
+*So the tricky thing in painting is basically figuring out in which layer the painting command should go. So conceptually, you can think of these layers as buffers of pixels. We don't actually make pixels out of them. We just keep them as vectors,* but you don't have to worry about that too much.\\
+26:33\\
+*So during the paint phase we go walk the tree in depth order, and then we paint into these layers.*
+
+27:45\\
+*So there's this funny thing where a given render object isn't allocated to a unique layer. His painting can actually be split across multiple layers.*\\
+27:55\\
+So this is in contrast to basically-- I'm not aware of any other system that does this. So for example, in Cocoa there's a one-to-one correspondence between UI views and CA layers. You can't split a UI view into multiple CA layers. Similarly on the web, you can't split a single render object into multiple layers. [? Its ?] painting doesn't work, and there's plenty of bugs because of that.\\
+28:17\\
+But in this system we basically do that. *So the way we do it is we-- it's not just offsets that we're sending down the tree. There's actually stuff that comes back up in our one-pass walk. In particular, the target layer, so which layer you ought to draw into is something your children tell you as part of painting.* So you tell your child go paint yourself over here. And he tells you, hey, you should continue painting in this other layer.\\
+28:39\\
+So if you were a foreign language person you would think of this as like continuation passing. So he passes the continuation of where you should continue painting.\\
+28:48\\
+And in that way, *the computation of the compositing strategy, so which things are painted into which layer, and the actual recording of the painting commands is unified into one walk that's done in this simple, one-pass down up algorithms.*
+
+29:07\\
+So that's nice, but now you see there are all these funny, non-local effects.\\
+29:37\\
+And so, while we have this clever idea from the layout that we should introduce these relayout boundaries, what if we did something similar for painting and artificially introduced repaint boundaries?\\
+29:48\\
+*So what a repaint boundary does is basically say I'm going to artificially pretend that this child needs its own composited layer. And what that means is it produces-- that the effects in that sub-tree are then contained. They don't affect other parts of the tree.*\\
+30:17\\
+The relayout boundary basically has stabilized the algorithm so that it's-- the non-local effects are contained in that sub-tree.
+
+30:40\\
+So he asked will the relayout boundaries be computed automatically for you by looking at the data flow.
+But these repaint boundaries, I didn't tell you how we computed them automatically, and he might be suspicious that that means that *we don't know how to compute them automatically.*\\
+30:53\\
+And that's actually true. *So we can place these repaint boundaries anywhere in the tree.* It's a very flexible concept. But we don't know where is the optimal place to paint them.\\
+31:04\\
+*So if you imagine if you put every different render object in their own repaint boundary-- they all use composited layers, but the really big stack of composited layers.* And that might be inefficient, because now you have to manage all these layers, or if you texturize them. So you turn them into actual pixels on the GPU, then you have a lot of pixels, many more pixels than you had on the screen.\\
+31:23\\
+On the other hand, you don't want to have zero. *So basically, you don't want everyone coupled into one painting pass.* So the optimal repaint boundaries for your app is somewhere between everything and nothing. *And where to draw that boundary is actually-- it has a large effect on the performance of the app, and it's something that's difficult to compute automatically.*\\
+31:45\\
+So it's-- you should think about the structure of your app and say, when this part of my app repaints, what parts of the app always repaint with it? Or were there parts of the app that are repainting them for different reasons.
+
+33:05\\
+ADAM BARTH: Yeah, so the question is, do you really have to add all these repaint boundaries manually? That sounds like a big pain.
+And the answer is no, that a lot of the basic widgets that we provide you know where you should put repaint boundaries.\\
+33:19\\
+Or the scrolling widget has a repaint boundary in there because it's a common case. And it's when you're building more complicated things, or you're building your own scroller or your own scroll-like interaction or something that you might have to think about where to put in the repaint boundaries.
+
+33:39\\
+So that was painting. So we generated all these layers. What do we do with them? Why do we even have them?\\
+33:45\\
+*So one benefit you have for breaking your scene up into these composited layers is you can update your visual appearance very fast. So if all you're doing is moving around these layers or changing their offsets or transforms, then you don't have to do any of the rest of the work that we've talked to up to this point. Because you have everything split apart into pieces, you just need to draw those big pieces again.*
+
+34:14\\
+So a good motivating example for why you want to do this is scrolling.\\
+35:02\\
+You want to basically have scrolling be as efficient as possible. So what you do is you use a separate layer for each of the items in the scrollable list. So here when I move from the first part of the scroll to the second part of the scroll, all I did was shift those boxes up.
+I didn't have to repaint them.
+I didn't have to relayout them.
+I didn't have to do anything.
+I just took their-- either their already recorded drawn commands, or if they've been turned into pixels just their pixels and spew them back onto the screen.\\
+35:34\\
+And as I scroll up I reveal this new item. So the only amount of painting I have to do is when I reveal a new item I have to go create a layer for him, paint him. But now I have him, and as I scroll I don't have to do anymore work. I just have to slide him around.
+
+36:06\\
+This also connects up to earlier where we talked about where each of these items in the list don't know what their offset is.
+*So their behavior or appearance can't possibly depend on their offset, because they don't know what their offset is. So then I know that I can just move them without talking to them.*\\
+36:25\\
+And so that means I don't have to do-- the amount of work I have to do to do a composited scroll is essentially very, very little. And so on like three-year-old devices we can do composited scroll in about one millisecond. That's pretty fast.
+
+36:42\\
+AUDIENCE: How does this compare to what
+other systems [INAUDIBLE], this scrolling?\\
+36:47\\
+ADAM BARTH: *It's basically everyone uses the same underlying commands on the GPU to do scrolling like this. So it's only a question of how much work was it author* and how-- so in this system we've built up the instructions so that when you use one of these things it just feels totally natural.
+
+37:43\\
+So [? Forest ?] asked what do you mean by compositing? I'm a graphics guy. This doesn't look like compositing to me.\\
+37:53\\
+Yeah, so traditionally compositing means I had pixels recorded in a texture. And [? then what I'm ?] going to do is I'm going to [? blit ?] that texture onto the screen in order.\\
+38:05\\
+And so we actually do that sometimes, but we don't always do that. *So each of these layers can either be represented as a vector, so like a display list, so a list of drawing commands to execute.*\\
+38:18\\
+Or we can bake that list-- that display list into a texture. And then once we have the texture we can [? blit ?] the pixels directly to the screen.\\
+38:26\\
+*And so the question is, when do we decide to texturize these layers?*\\
+38:30\\
+And so we have-- so in other systems they make very strong commitments about this. So Cocoa says every C layer, it's a texture. We're going to have lots of GPU memory. It's going to be OK.\\
+38:44\\
+Android framework says the opposite. It says I never ever want to make textures. I don't have a lot of memory. I'm going to redraw my display lists from scratch every frame and I'm going to make that really efficient.\\
+38:53\\
+*So this system actually takes a middle approach to these things. So what happens, if you draw the texture three times*-- when we draw a layer three times as a vector, we'd be like, we keep drawing this same layer. I bet it's worth making a texture out of it. *And the third time we'll first draw it to a texture and then [? blit it from the texture, ?] and from then on as long as you keep drawing it we'll just draw it directly from the texture*.
+
+40:34\\
+ADAM BARTH: Yeah, OK, so when I said three-- so he said what if we have lots of tiny stuff and that seems like a waste to make [? all that. ?] *Yeah, so three is not the only answer. There's some more heuristics that decide when we should texturize and we should not texturize.*\\
+40:47\\
+And I suspect as the system matures, we'll need to tune those heuristics. So there's a heuristic that says, hey, this layer doesn't-- it's not really complicated. It's really just a big frigging rectangle. There's no point in storing pixels for it. We might as well just draw it.\\
+41:00\\
+Or there's a heuristic that says, hey, it's got a lot of empty space in it. It's going to be really inefficient and I've got a lot of transparent pixels. It's kind of useless.\\
+41:08\\
+So there are various heuristics that we use to decide whether to texturize something.\\
+41:12\\
+But the nice thing is, as the author is you don't have to worry about any of that. That's all done by the compositor.\\
+41:19\\
+Maybe we'll-- we probably should expose some sort of control [? levers ?] for that to let you tune it yourself I guess, but we don't do that yet.
+
+
+41:35\\
+ADAM BARTH: Yeah, so Andrew was saying if we auto-texturize after three things, why can't we just auto-layerize after three things?\\
+41:46\\
+Yeah so, we should probably investigate that. So if you run in debug mode, we actually keep track of all the repaint boundaries that you put into your app. We keep statistics about them about how effective they are.\\
+42:17\\
+And so we maybe could use that information to automatically generate repaint boundaries, but we haven't really investigated that too much.
+
+42:35\\
+So it's basically using what is the actual trade-off involved in a repaint boundary. *So the actual trade-off is the trade-off between the amount of time you spend in the paint phase recording commands versus the amount of memory you take and the amount of management overhead you have for these layers.*\\
+42:52\\
+So if you had infinite memory and we had really good memory management-- really good tools for managing these things, [? you would ?] make everything a repaint boundary. And you could imagine you could make every pixel on your screen a repaint boundary.\\
+43:04\\
+And then you'd be like, we got really good at managing the pixels. We built some specialized hardware for it. We call it a GPU.\\
+43:11\\
+*So it's sort of a moving work from different parts of the pipeline to other parts of the pipeline.* So if you have a really beefy GPU that could just take every command you fire at it and draw it, then you would never want any repaint boundaries. It wouldn't make any sense.\\
+43:26\\
+But if you-- but in reality, the pipeline that your app goes to to render has different constraints on it-- [? excuse me, ?] on a CPU and a GPU which have different relative strengths. You have different amounts of CPU memory, different amounts of GPU memory, and so a lot of implicit in these thing-- in these different knobs you can turn are how do you re-balance your workload across these diverse [? set of ?] [? resources. ?]\\
+43:49\\
+*And so what we've done is we've basically picked an approach that is optimized for mobile devices.* So in contrast to other systems that were designed for, for example, desktop devices where the GPUs didn't even exist when they were designed. So then we designed the whole system to be roughly optimized for mobile devices. And then there are a few little knobs you can tune to basically say, my particular workload or my particular app, how do I make efficient use of all the resources that are available at each stage of the pipeline?
+
+44:33\\
+ADAM BARTH: Yeah, so his question was this auto-texturization and doesn't this add a lot of noise to your pipeline, which might cause you to miss your frame deadlines?\\
+44:44\\
+Yes, I was worried about that too, but it turns out not to actually be that bad. So the reason that-- my hypothesis is they're not all synchronized.\\
+45:13\\
+So as long as the-- it's not like you're drawing them all at the same time. So it turns out not to actually add that much noise to the pipeline.
+
+45:24\\
+So you have-- there's lots of diagnostics, so if you go into an observatory and you look at the timeline and you record a timeline because you have a time-oriented view of what's going on, you can see each phase of the pipeline where we labeled. And you see the order that they execute, how much time they take relative to each other. And you can see things like texturize show up as-- and you can see things like how much layout you're doing or either-- if you even visit the layout phase of the pipeline at all, or whether your frame can purely be produced by painting or purely be produced by compositing.
+
+46:13\\
+ADAM BARTH: Yeah, so his question is do we always turn them into pixels or do sometimes we draw them as vectors.\\
+46:18\\
+No, so when we're drawing them as vectors, we just draw them in [? Immediate ?] mode as vectors. We just issue a bunch of-- like if you have a path, we'll issue all of the triangles for the path.
+
+46:31\\
+ADAM BARTH: How do you determine whether frames one, two, and three are the same?\\
+46:34\\
+That's a good question. So the display [? lists ?] are [? immutable. ?] So once you've recorded a display list there's no way of altering it. All you can do is tear it down and record a new one. So they just have unique IDs and so we just keep track.\\
+46:50\\
+ADAM BARTH: Well, this playlist had just unique IDs, and so we just remember the ID that we drew last time. So [? it's we ?] drew display list 27 last time, so this one is display list 27. It's immutable, so it must be the same thing.\\
+47:03\\
+And we also record the matrix, so we'll always draw exactly, perfectly under the pixel grid of the device. So if you change the matrix, then we'll-- change the matrix in a way that it changes the projection from the layer to the screen, then we'll say OK, that doesn't count as drawing the same thing because we want to hit the exact pixels.\\
+47:21\\
+So for example, in other systems like Cocoa, if you take a UI layer-- UI view and you transform it, you won't always hit exactly the pixel grid, which means you'll get a little bit of aliasing. So that's a trade-off for performance. So if you-- that means that they're able to draw from textures more often but you don't get pixel perfect output.\\
+47:39\\
+And I expect eventually we'll want to have that capability [? in ?] [? system and we ?] definitely can, but right now the system is tuned for pixel perfect output. And then, if that's too slow, then we'll reduce the quality to get performance, if necessary.
+
+
+48:35\\
+ADAM BARTH: Yeah, so he says *some widgets can take their size from their child, Is that introduced N squared behavior?*\\
+48:41\\
+And so the answer is slightly subtle. So the simple answer to that question is no, it doesn't introduce-- in general it doesn't introduce N squared behavior.\\
+48:52\\
+Because remember my parent gave me my constraints.
+I was allowed to talk to my children,
+and then I reported my size.
+So if I want my size to exactly match my child,
+all I have to do is ask him, hey child.
+What's your size?
+They'll tell me, and then I can just
+tell my parent that was my size.\\
+49:07\\
+So in general, if you want to shrink wrap your children,
+that's basically free.\\
+49:12\\
+But there are cases where you want
+to do something slightly different than that.
+So they don't actually come up that much,
+but when they come out there's sort of no other way
+of solving these problems.\\
+49:21\\
+So a good example of that is the-- a pop-up menu
+in material design.
+So how wide should a pop-up menu in material design be?
+So the answer is he should be as wide as his-- the widest
+line of text contained in the menu, rounded up
+to an integral number of eight pixels.
+OK, that's what they wrote in the speck.
+It sounds great.\\
+49:45\\
+So if you just asked each child to please lay out at your size,
+and then I'm going to size myself
+to the max of you plus eight pixels,
+that wouldn't actually be correct.
+And the reason it wouldn't be correct is because of Arabic.
+So in Arabic, instead of writing from left to right
+you write from right to left, which
+means the menu item in Arabic should
+be-- all of the text of the menu item
+should be aligned vertically on the right edge,
+on the right edge.\\
+50:18\\
+And which means you have to, when you lay out the children,
+you have to tell them how big the menu is actually
+going to be in order to get the correct text layout.
+And so how do you know?
+It's like a chicken and egg problem.\\
+50:32\\
+So this is the case where you actually
+need those intrinsic sizing functions that I sort of put up
+on the slides but didn't really tell you much about.\\
+50:39\\
+So intrinsic sizing lets you ask your child,
+hey, how big would you be if you-- well, you
+get four different questions to ask,
+and they are sort of subtle what they are.
+But the one you want in this case
+is you ask the child how big is your longest line of text,
+effectively.\\
+51:07\\
+In those cases you can get N squared behavior,
+because if you keep asking that question recursively as you
+go down the tree, then you could be always asking
+that same text at the bottom.
+
+52:06\\
+ADAM BARTH: Yeah, so [? Yager's ?] question is Ian gave this talk that explained the build phase in detail, and I gave this talk that explained the layout and [? paint ?] phase. And I told you it was a pipeline. What if my build wants to depend on my layout?\\
+52:20\\
+And so, when I said it was a pipeline I sort of actually lied. *So the build phase and the layout phase are allowed to intermix with each other. So in the middle of layout you can do some more building. You can't do building-- you can't do layout in the middle of building.*\\
+52:38\\
+So I guess you're allowed to build phases inside of your layout phases. *And this actually follows from a very important property of the system that I discussed, which is that a render object doesn't know anything about its children.* So what you do is you have this-- another kind of render object, another kind of render box. So this child model is lazy in some sense.\\
+52:56\\
+So it basically says, when I need to go layout my children, because no one else has ever been able to talk to them, because no one else knows what my child model is, I can create them just in time in order to do their layout.
