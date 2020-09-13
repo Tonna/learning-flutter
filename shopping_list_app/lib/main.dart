@@ -43,7 +43,7 @@ class _ProductWidgetState extends State<ProductWidget> {
   _addProduct(BuildContext context, String name) {
     try {
       log("value add");
-      DBProvider.db.addNewProduct(name).then((value) => {});
+      DBProvider.db.addNewProduct(name);
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
@@ -52,38 +52,31 @@ class _ProductWidgetState extends State<ProductWidget> {
   _addStateChange(BuildContext context, ProductState newState, int productId) {
     try {
       DBProvider.db
-          .addProductStateChange(newState, productId)
-          .then((value) => {});
+          .addProductStateChange(newState, productId);
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
   }
 
   Future<List<Product>> getAllProducts() async {
-    log("get all products");
-    return await DBProvider.db.loadListOfProducts().then((value) => sortProducts(value));
+    return await DBProvider.db
+        .loadListOfProducts()
+        .then((value) => sortProducts(value));
   }
 
   Future<List<Product>> getActive() async {
     var afasdfasd = await getAllProducts();
-
-    return afasdfasd.where((element) => element.stateLog.last.state == ProductState.active)
+    return afasdfasd
+        .where((element) => element.stateLog.last.state == ProductState.active)
         .toList();
-    if (afasdfasd.isEmpty) {
-      return [];
-    }
-    return afasdfasd;
   }
 
   Future<List<Product>> getNotActive() async {
     var afasdfasd = await getAllProducts();
-    return afasdfasd.where(
+    return afasdfasd
+        .where(
             (element) => element.stateLog.last.state == ProductState.notActive)
         .toList();
-    if (afasdfasd.isEmpty) {
-      return [];
-    }
-    return afasdfasd;
   }
 
   @override
@@ -91,10 +84,10 @@ class _ProductWidgetState extends State<ProductWidget> {
     log("build");
     //log(_products);
 
-    Map<String, ListView> qsder = {
-      "all": getGodWidget(getAllProducts),
-      "to buy": getGodWidget(getActive),
-      "enough": getGodWidget(getNotActive)
+    Map<String, FutureBuilder<List<Product>>> qsder = {
+      "all": getGodWidget(getAllProducts()),
+      "to buy": getGodWidget(getActive()),
+      "enough": getGodWidget(getNotActive())
     };
 
     return DefaultTabController(
@@ -116,43 +109,52 @@ class _ProductWidgetState extends State<ProductWidget> {
         ));
   }
 
-  ListView getGodWidget(List<Product> Function() aaa) {
-    var selectedProducts = aaa();
-    log("we have products to display");
-    log(selectedProducts);
-    return ListView.builder(
-        itemCount: selectedProducts.length,
-        itemBuilder: (context, index) {
-          var currentProduct = selectedProducts[index];
-          var currentProductState = currentProduct.stateLog.last.state;
-          var isActive = currentProductState == ProductState.active;
-          return Container(
-              color: isActive ? Colors.red : Colors.white,
-              child: ListTile(
-                title: Text(currentProduct.name),
-                leading: Text(
-                    (selectedProducts.indexOf(currentProduct) + 1).toString()),
-                subtitle: (Text(
-                    getPrintableState(currentProduct.stateLog.last.state) +
-                        " at " +
-                        _dateFormat.format(currentProduct.stateLog.last.at))),
-                trailing: IconButton(
-                  icon: Icon(isActive ? Icons.shopping_basket : Icons.looks),
-                  onPressed: () {
-                    setState(() {
-                      if (isActive) {
-                        _addStateChange(
-                            context, ProductState.notActive, currentProduct.id);
-                        setState(() => {});
-                      } else {
-                        _addStateChange(
-                            context, ProductState.active, currentProduct.id);
-                        setState(() => {});
-                      }
-                    });
-                  },
-                ),
-              ));
+  FutureBuilder<List<Product>> getGodWidget(
+      Future<List<Product>> selectedProducts) {
+    return FutureBuilder<List<Product>>(
+        future: selectedProducts,
+        builder: (BuildContext context, AsyncSnapshot<List<Product>> snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+                itemCount: snapshot.requireData.length,
+                itemBuilder: (context, index) {
+                  var currentProduct = snapshot.requireData[index];
+                  var currentProductState = currentProduct.stateLog.last.state;
+                  var isActive = currentProductState == ProductState.active;
+                  return Container(
+                      color: isActive ? Colors.red : Colors.white,
+                      child: ListTile(
+                        title: Text(currentProduct.name),
+                        leading: Text(
+                            (snapshot.requireData.indexOf(currentProduct) + 1)
+                                .toString()),
+                        subtitle: (Text(getPrintableState(
+                                currentProduct.stateLog.last.state) +
+                            " at " +
+                            _dateFormat
+                                .format(currentProduct.stateLog.last.at))),
+                        trailing: IconButton(
+                          icon: Icon(
+                              isActive ? Icons.shopping_basket : Icons.looks),
+                          onPressed: () {
+                            setState(() {
+                              if (isActive) {
+                                _addStateChange(context, ProductState.notActive,
+                                    currentProduct.id);
+                                //setState(() => {});
+                              } else {
+                                _addStateChange(context, ProductState.active,
+                                    currentProduct.id);
+                                //setState(() => {});
+                              }
+                            });
+                          },
+                        ),
+                      ));
+                });
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
         });
   }
 
@@ -174,8 +176,6 @@ class _ProductWidgetState extends State<ProductWidget> {
   }
 
   void _addProductDialog(BuildContext context) async {
-    Product _newProduct;
-
     List<Widget> formWidgetList = new List();
     formWidgetList.add(createProductNameWidget());
     formWidgetList
@@ -200,7 +200,7 @@ class _ProductWidgetState extends State<ProductWidget> {
       )
     ]));
 
-    _newProduct = await showDialog<Product>(
+    await showDialog<Product>(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(

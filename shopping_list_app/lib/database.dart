@@ -140,6 +140,7 @@ class DBProvider {
       await db.rawInsert(
           "insert into product_product_state_change_link (product_id, product_state_change_id) values(?, ?)",
           [productId, stateChangeId]);
+      print("added state");
       return ProductStateChange(stateChangeId, state, when);
     } catch (e) {
       log(e);
