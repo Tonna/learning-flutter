@@ -25,7 +25,6 @@ class ProductWidget extends StatefulWidget {
 class _ProductWidgetState extends State<ProductWidget> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  //List<Product> _products = List<Product>();
   final _formKey = GlobalKey<FormState>();
   final DateFormat _dateFormat = DateFormat("d MMM HH:mm");
 
@@ -43,16 +42,18 @@ class _ProductWidgetState extends State<ProductWidget> {
   _addProduct(BuildContext context, String name) {
     try {
       log("value add");
-      DBProvider.db.addNewProduct(name);
+      DBProvider.db.addNewProduct(name).whenComplete(() => setState(() {}));
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
   }
 
-  _addStateChange(BuildContext context, ProductState newState, int productId) {
+  _addStateChange(
+      BuildContext context, ProductState newState, int productId) async {
     try {
-      DBProvider.db
-          .addProductStateChange(newState, productId);
+      await DBProvider.db
+          .addProductStateChange(newState, productId)
+          .whenComplete(() => setState(() {}));
     } catch (e) {
       _showSnackBar(context, e.toString(), error: true);
     }
@@ -64,16 +65,14 @@ class _ProductWidgetState extends State<ProductWidget> {
         .then((value) => sortProducts(value));
   }
 
-  Future<List<Product>> getActive() async {
-    var afasdfasd = await getAllProducts();
-    return afasdfasd
+  Future<List<Product>> getActive(Future<List<Product>> allProducts) async {
+    return (await allProducts)
         .where((element) => element.stateLog.last.state == ProductState.active)
         .toList();
   }
 
-  Future<List<Product>> getNotActive() async {
-    var afasdfasd = await getAllProducts();
-    return afasdfasd
+  Future<List<Product>> getNotActive(Future<List<Product>> allProducts) async {
+    return (await allProducts)
         .where(
             (element) => element.stateLog.last.state == ProductState.notActive)
         .toList();
@@ -82,25 +81,26 @@ class _ProductWidgetState extends State<ProductWidget> {
   @override
   Widget build(BuildContext context) {
     log("build");
-    //log(_products);
 
-    Map<String, FutureBuilder<List<Product>>> qsder = {
-      "all": getGodWidget(getAllProducts()),
-      "to buy": getGodWidget(getActive()),
-      "enough": getGodWidget(getNotActive())
+    var allProducts = getAllProducts();
+    Map<String, FutureBuilder<List<Product>>> tabsWithList = {
+      "all": getListViewFutureBuilder(allProducts),
+      "to buy": getListViewFutureBuilder(getActive(allProducts)),
+      "enough": getListViewFutureBuilder(getNotActive(allProducts))
     };
 
     return DefaultTabController(
-        length: qsder.length,
+        length: tabsWithList.length,
         child: Scaffold(
           key: _scaffoldKey,
           appBar: new AppBar(
               title: new Text("Products list"),
               bottom: TabBar(
                   isScrollable: false,
-                  tabs: qsder.keys.map((a) => Text(a)).toList())),
-          body: TabBarView(
-              children: [for (final t in qsder.values) Container(child: t)]),
+                  tabs: tabsWithList.keys.map((a) => Text(a)).toList())),
+          body: TabBarView(children: [
+            for (final t in tabsWithList.values) Container(child: t)
+          ]),
           floatingActionButton: new FloatingActionButton(
             onPressed: () => _addProductDialog(context),
             backgroundColor: Colors.pinkAccent,
@@ -109,7 +109,7 @@ class _ProductWidgetState extends State<ProductWidget> {
         ));
   }
 
-  FutureBuilder<List<Product>> getGodWidget(
+  FutureBuilder<List<Product>> getListViewFutureBuilder(
       Future<List<Product>> selectedProducts) {
     return FutureBuilder<List<Product>>(
         future: selectedProducts,
@@ -141,11 +141,9 @@ class _ProductWidgetState extends State<ProductWidget> {
                               if (isActive) {
                                 _addStateChange(context, ProductState.notActive,
                                     currentProduct.id);
-                                //setState(() => {});
                               } else {
                                 _addStateChange(context, ProductState.active,
                                     currentProduct.id);
-                                //setState(() => {});
                               }
                             });
                           },

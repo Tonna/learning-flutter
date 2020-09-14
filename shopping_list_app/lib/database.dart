@@ -27,22 +27,6 @@ class DBProvider {
 //        db.delete("product");
 //        db.delete("product_state_change");
 //        db.delete("product_product_state_change_link");
-//
-//        db.execute(
-//            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
-//        db.execute("INSERT INTO `product` (id,name) VALUES (2,'milk')");
-//        db.execute(
-//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'notActive','2004-01-01T02:34:56.123Z')");
-//        db.execute(
-//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (2,'notActive','2020-04-04T10:00:00.123Z')");
-//        db.execute(
-//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (3,'active','2020-04-04T12:50:00.123Z')");
-//        db.execute(
-//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
-//        db.execute(
-//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,2)");
-//        db.execute(
-//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (2,3)");
       },
       onCreate: (db, version) {
         db.execute(
@@ -51,35 +35,15 @@ class DBProvider {
             "CREATE TABLE `product_product_state_change_link` ( `product_id` INTEGER, `product_state_change_id` INTEGER, PRIMARY KEY(`product_id`,`product_state_change_id`))");
         db.execute(
             "CREATE TABLE `product_state_change` ( `id` INTEGER, `new_state` TEXT NOT NULL, `changed_at` TEXT NOT NULL, PRIMARY KEY(`id`) )");
-//
-//        db.execute(
-//            "INSERT INTO `product` (id,name) VALUES (1,'sliced cheese')");
-//        db.execute(
-//            "INSERT INTO `product_state_change` (id,new_state,changed_at) VALUES (1,'active','2004-01-01T02:34:56.123Z')");
-//        db.execute(
-//            "INSERT INTO `product_product_state_change_link` (product_id,product_state_change_id) VALUES (1,1)");
       },
       version: 1,
     );
   }
 
   Future<List<Product>> loadListOfProducts() async {
-   // log("loadList start");
+    log("loadList start");
 
     final Database db = await database;
-
-//    final List<Map<String, dynamic>> products = await db.query("product");
-//    log(products);
-//
-//    final List<Map<String, dynamic>> state_change =
-//        await db.query("product_state_change");
-//    log(state_change);
-//
-//    final List<Map<String, dynamic>> links =
-//        await db.query("product_product_state_change_link");
-//    log(links);
-//
-//    log("loadList ended");
 
     List<Map<String, dynamic>> list = await db.rawQuery(
         "select p.id as product_id, p.name as product_name, c.id as change_state_id, c.new_state as new_state, c.changed_at as state_changed_at"
@@ -117,12 +81,11 @@ class DBProvider {
         }
       });
 
-      print(listOfProducts);
+      log(listOfProducts);
     } catch (e) {
       log(e);
       throw e;
     }
-
     return listOfProducts.values.toList();
   }
 
@@ -140,7 +103,7 @@ class DBProvider {
       await db.rawInsert(
           "insert into product_product_state_change_link (product_id, product_state_change_id) values(?, ?)",
           [productId, stateChangeId]);
-      print("added state");
+      log("added state");
       return ProductStateChange(stateChangeId, state, when);
     } catch (e) {
       log(e);
