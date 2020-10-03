@@ -77,13 +77,14 @@ class BodyWidget extends StatelessWidget {
     return Align(
       alignment: Alignment(-0.7, -0.7),
       child: Container(
-        height: 300,
+        height: 180,
         child: VerticalText(
           text: TextSpan(
             text: Strings.mongolianWelcomeText,
             style: TextStyle(
               color: Colors.white70,
               fontSize: 30,
+              fontFamily: 'MenksoftQagan',
             ),
           ),
         ),

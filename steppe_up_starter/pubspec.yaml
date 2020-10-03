@@ -18,3 +18,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/steppe_night.jpg
+    - assets/steppe_night.jpg
+  fonts:
+    - family: MenksoftQagan
+      fonts:
+        - asset: assets/fonts/MQG8F02.ttf
