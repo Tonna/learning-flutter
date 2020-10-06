@@ -50,41 +50,50 @@ class MyApp extends StatelessWidget {
 }
 
 class BodyWidget extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        backgroundImage(),
-        mongolianVerticalText(),
-        travelMongoliaLabel(),
-      ],
-    );
-  }
-
-  Container backgroundImage() {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/steppe_night.jpg'),
-          fit: BoxFit.cover,
-        ),
+    return Stack(children: <Widget>[
+      GridView.count(
+        children: <Widget>[
+          //     backgroundImage(),
+          russianVerticalText(),
+          russianVerticalText2(),
+          russianVerticalText3(),
+          russianVerticalText2(),
+          russianVerticalText(),
+          russianVerticalText3(),
+        ],
+        crossAxisCount: 2,
       ),
-    );
+      travelMongoliaLabel(),
+    ]);
   }
 
-  Align mongolianVerticalText() {
+//  Container backgroundImage() {
+//    return Container(
+//      decoration: BoxDecoration(
+//        image: DecorationImage(
+//          image: AssetImage('assets/livrezon_logo.jpg'),
+//          fit: BoxFit.cover,
+//        ),
+//      ),
+//    );
+//  }
+
+  Align russianVerticalText() {
     return Align(
       alignment: Alignment(-0.7, -0.7),
       child: Container(
-        height: 180,
+        height: 300,
+        width: 300,
         child: VerticalText(
+          rotation: 2.0,
           text: TextSpan(
-            text: Strings.mongolianWelcomeText,
+            text: Strings.russingWelcomeText,
             style: TextStyle(
-              color: Colors.white70,
-              fontSize: 30,
-              fontFamily: 'MenksoftQagan',
+              color: Colors.red,
+              fontSize: 20,
+//              fontFamily: 'MenksoftQagan',
             ),
           ),
         ),
@@ -92,12 +101,74 @@ class BodyWidget extends StatelessWidget {
     );
   }
 
+  Align russianVerticalText2() {
+    return Align(
+      alignment: Alignment(-0.7, -0.7),
+      child: Container(
+        height: 300,
+        width: 300,
+        child: VerticalText(
+          rotation: 5.0,
+          text: TextSpan(
+            text: Strings.russingWelcomeText2,
+            style: TextStyle(
+              color: Colors.green,
+              fontSize: 20,
+//              fontFamily: 'MenksoftQagan',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Align russianVerticalText3() {
+    return Align(
+      alignment: Alignment(-0.7, -0.7),
+      child: Container(
+        height: 300,
+        width: 300,
+        child: VerticalText(
+          rotation: 3.0,
+          text: TextSpan(
+            text: Strings.russingWelcomeText3,
+            style: TextStyle(
+              color: Colors.orange,
+              fontSize: 20,
+//              fontFamily: 'MenksoftQagan',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+//  Align mongolianVerticalText() {
+//    return Align(
+//      alignment: Alignment(-0.7, -0.7),
+//      child: Container(
+//        height: 180,
+//        child: VerticalText(
+//          text: TextSpan(
+//            text: Strings.mongolianWelcomeText,
+//            style: TextStyle(
+//              color: Colors.white70,
+//              fontSize: 30,
+//              fontFamily: 'MenksoftQagan',
+//            ),
+//          ),
+//        ),
+//      ),
+//    );
+//  }
+
   SafeArea travelMongoliaLabel() {
     return SafeArea(
       child: Align(
         alignment: Alignment.bottomCenter,
-        child: Text(  // TODO: Start your journey here
-          Strings.travelMongolia,
+        child: Text(
+          // TODO: Start your journey here
+          Strings.participateInCell,
           style: TextStyle(
             color: Colors.white70,
             fontSize: 20.0,

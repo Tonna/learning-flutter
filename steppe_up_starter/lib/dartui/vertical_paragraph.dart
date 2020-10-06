@@ -40,11 +40,12 @@ import '../util/line_breaker.dart';
 
 // TODO: Refer to the tutorial for directions to complete this class.
 class VerticalParagraph {
-  VerticalParagraph(this._paragraphStyle, this._textStyle, this._text);
+  VerticalParagraph(this._paragraphStyle, this._textStyle, this._text, this._rotation);
 
   ui.ParagraphStyle _paragraphStyle;
   ui.TextStyle _textStyle;
   String _text;
+  double _rotation;
 
   List<TextRun> _runs = [];
   List<LineInfo> _lines = [];
@@ -79,6 +80,7 @@ class VerticalParagraph {
     print("There are ${_lines.length} lines.");
     print("width=$width height=$height");
     print("min=$minIntrinsicHeight max=$maxIntrinsicHeight");
+    print("rotation=$_rotation");
   }
 
   void _calculateRuns() {
@@ -171,7 +173,7 @@ class VerticalParagraph {
 
     canvas.translate(offset.dx, offset.dy);
 
-    canvas.rotate(math.pi/2); //TODO play
+    canvas.rotate(math.pi/_rotation); //TODO play
 
     for (LineInfo line in _lines){
       canvas.translate (0, -line.bounds.height);

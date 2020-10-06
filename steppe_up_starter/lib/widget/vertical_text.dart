@@ -42,18 +42,21 @@ class VerticalText extends LeafRenderObjectWidget {
   const VerticalText({
     Key key,
     this.text,
+    this.rotation
   }) : super(key: key);
 
   final TextSpan text;
+  final double rotation;
 
   @override
   RenderVerticalText createRenderObject(BuildContext context) {
-    return RenderVerticalText(text);
+    return RenderVerticalText(text, rotation);
   }
 
   @override
   void updateRenderObject(
       BuildContext context, RenderVerticalText renderObject) {
     renderObject.text = text;
+    renderObject.rotation = rotation;
   }
 }

@@ -43,7 +43,7 @@ import 'package:steppe_up/model/vertical_paragraph_constraints.dart';
 /// switched the meaning of width and height. I also removed most of the
 /// original parameters. Other differences I've added comments below.
 class VerticalTextPainter {
-  VerticalTextPainter({TextSpan text}) : _text = text;
+  VerticalTextPainter({TextSpan text, double rotation}) : _text = text, _rotation = rotation;
 
   VerticalParagraph _paragraph;
   bool _needsLayout = true;
@@ -51,11 +51,19 @@ class VerticalTextPainter {
   TextSpan get text => _text;
   TextSpan _text;
 
+  double _rotation;
+  double get rotation => _rotation;
+
   set text(TextSpan value) {
     if (_text == value) return;
     _text = value;
     _paragraph = null;
     _needsLayout = true;
+  }
+
+  set rotation(double value){
+    if(_rotation == value) return;
+    _rotation = value;
   }
 
   double _applyFloatingPointHack(double layoutValue) {
@@ -95,6 +103,9 @@ class VerticalTextPainter {
       // use a default paragraph style.
       final VerticalParagraphBuilder builder = VerticalParagraphBuilder(null);
       _applyTextSpan(builder, _text);
+      //todo
+      builder.rotation = _rotation;
+
       _paragraph = builder.build();
     }
     _lastMinHeight = minHeight;
@@ -105,6 +116,10 @@ class VerticalTextPainter {
       if (newHeight != height)
         _paragraph.layout(VerticalParagraphConstraints(height: newHeight));
     }
+
+
+
+
   }
 
   /// Ignoring [TextSpan] children in this implementation. This method replaces
@@ -126,6 +141,6 @@ class VerticalTextPainter {
   /// Painting was moved to the VerticalParagraph since Canvas.drawParagraph
   /// assumes a horizontal layout.
   void paint(Canvas canvas, Offset offset) {
-    _paragraph.draw(canvas, offset);
+    _paragraph.draw(canvas, Offset(offset.dx, offset.dy));
   }
 }

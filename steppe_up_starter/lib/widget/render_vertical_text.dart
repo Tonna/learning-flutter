@@ -39,12 +39,13 @@ import 'package:steppe_up/dartui/vertical_text_painter.dart';
 /// [RenderParagraph] have been removed for the sake of simplicity. Consult the
 /// Flutter source code for that class to add them in as needed.
 class RenderVerticalText extends RenderBox {
-  RenderVerticalText(TextSpan text)
-      : _textPainter = VerticalTextPainter(text: text);
+  RenderVerticalText(TextSpan text, double rotation)
+      : _textPainter = VerticalTextPainter(text: text, rotation: rotation);
 
   final VerticalTextPainter _textPainter;
 
   TextSpan get text => _textPainter.text;
+  double get rotation => _textPainter.rotation;
 
   set text(TextSpan value) {
     switch (_textPainter.text.compareTo(value)) {
@@ -60,6 +61,10 @@ class RenderVerticalText extends RenderBox {
         markNeedsLayout();
         break;
     }
+  }
+
+  set rotation(double value){
+    _textPainter.rotation  = value;
   }
 
   void _layoutText({

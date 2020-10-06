@@ -51,6 +51,7 @@ class VerticalParagraphBuilder {
   ui.ParagraphStyle _paragraphStyle;
   ui.TextStyle _textStyle;
   String _text = '';
+  double _rotation;
 
   static final _defaultParagraphStyle = ui.ParagraphStyle(
     textAlign: TextAlign.left,
@@ -72,6 +73,10 @@ class VerticalParagraphBuilder {
     _text = text;
   }
 
+  set rotation(double rotation){
+    _rotation = rotation;
+  }
+
   VerticalParagraph build() {
     if (_paragraphStyle == null) {
       _paragraphStyle = _defaultParagraphStyle;
@@ -79,6 +84,9 @@ class VerticalParagraphBuilder {
     if (_textStyle == null) {
       _textStyle = _defaultTextStyle;
     }
-    return VerticalParagraph(_paragraphStyle, _textStyle, _text);
+//    if (_rotation == null){
+//      _rotation = 1;
+//    }
+    return VerticalParagraph(_paragraphStyle, _textStyle, _text, _rotation);
   }
 }
