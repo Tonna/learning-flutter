@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:table/my_table.dart';
+import 'package:table/widgets/my_table.dart';
 
 void main() {
   runApp(MyApp());
@@ -98,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            MyTable(children : [Text("a")]),
+            MyTable(children : [MyTableRow(children: [Text("a")])]),
             Text(
               'You have pushed the button this many times:',
             ),
