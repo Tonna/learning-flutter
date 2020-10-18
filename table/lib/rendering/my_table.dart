@@ -6,10 +6,12 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter/src/rendering/box.dart';
 import 'package:flutter/src/rendering/object.dart';
+
 import 'my_table_border.dart';
+
+import 'dart:math';
 
 /// Parent data used by [RenderTable] for its children.
 class MyTableCellParentData extends BoxParentData {
@@ -1166,19 +1168,32 @@ class MyRenderTable extends RenderBox {
       if (child != null) {
         final BoxParentData childParentData = child.parentData as BoxParentData;
         context.paintChild(child, childParentData.offset + offset);
+
+        if (Random().nextBool()) {
+          final Rect borderRect = Rect.fromLTWH(
+              childParentData.offset.dx + offset.dx,
+              childParentData.offset.dy + offset.dy,
+              child.size.width,
+              child.size.height);
+          final Iterable<double> rows = [0, 1];
+          final Iterable<double> columns = [0, 1];
+          border.paint(context.canvas, borderRect,
+              rows: rows, columns: columns);
+        }
+
       }
     }
     assert(_rows == _rowTops.length - 1);
     assert(_columns == _columnLefts.length);
-    if (border != null) {
-      // The border rect might not fill the entire height of this render object
-      // if the rows underflow. We always force the columns to fill the width of
-      // the render object, which means the columns cannot underflow.
-      final Rect borderRect = Rect.fromLTWH(offset.dx, offset.dy, size.width, _rowTops.last);
-      final Iterable<double> rows = _rowTops.getRange(1, _rowTops.length - 1);
-      final Iterable<double> columns = _columnLefts.skip(1);
-      border.paint(context.canvas, borderRect, rows: rows, columns: columns);
-    }
+    // if (border != null) {
+    //   // The border rect might not fill the entire height of this render object
+    //   // if the rows underflow. We always force the columns to fill the width of
+    //   // the render object, which means the columns cannot underflow.
+    //   final Rect borderRect = Rect.fromLTWH(offset.dx, offset.dy, size.width, _rowTops.last);
+    //   final Iterable<double> rows = _rowTops.getRange(1, _rowTops.length - 1);
+    //   final Iterable<double> columns = _columnLefts.skip(1);
+    //   border.paint(context.canvas, borderRect, rows: rows, columns: columns);
+    // }
   }
 
   @override

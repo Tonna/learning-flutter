@@ -230,13 +230,9 @@ class MyTableBorder {
               ..strokeWidth = verticalInside.width
               ..style = PaintingStyle.stroke;
             path.reset();
-            bool isOdd = false;
             for (final double x in columns) {
-              if (isOdd) {
                 path.moveTo(rect.left + x, rect.top);
                 path.lineTo(rect.left + x, rect.bottom);
-              }
-              isOdd = !isOdd;
             }
             canvas.drawPath(path, paint);
             break;
@@ -253,13 +249,9 @@ class MyTableBorder {
               ..strokeWidth = horizontalInside.width
               ..style = PaintingStyle.stroke;
             path.reset();
-            bool isOdd = true;
             for (final double y in rows) {
-              if (isOdd) {
                 path.moveTo(rect.left, rect.top + y);
                 path.lineTo(rect.right, rect.top + y);
-              }
-              isOdd = !isOdd;
             }
             canvas.drawPath(path, paint);
             break;
