@@ -1,0 +1,73 @@
+2020-10-18
+
+I am the psychotherapist.  Please, describe your problems.  Each time
+you are finished talking, type RET twice.
+
+A: I want to copy flutter table, but the imports I cannot easily handle
+
+Is it because the imports you cannot easily handle that you came to
+me?
+
+A: why cannot I use non-nullable dart language feature? I have dart
+2.11.0-something.dev ?
+
+
+Is it because cannot you use non nullable dart language feature you
+have dart 2 11 0 something dev that you came to me?
+
+A: Why does updating flutter and dart takes so long? It downloads
+things all the time. It's because I don't know what am I doing.
+
+
+Does it bother you that you do not know what are you doing?
+
+A: I don't think that simply putting different number of cells in each
+row I can get anywhere. Lets see if I can merge cells 
+
+When did you first know that simply putting different number of cells
+in each row you can get anywhere lets see if you can merge cells?
+
+A: If I wan't to "merge" two cells, should I don't render second cell
+and render first cell on place of second?
+
+Why do you say that?
+
+A: I cannot set value in debug
+
+Earlier you said cannot you use non nullable dart language feature you
+have dart 2 11 0 something dev?
+
+A: I think it is not supported 
+https://discuss.kotlinlang.org/t/unable-to-set-value-of-variable-in-debugger/7267/2
+
+Maybe your life has something to do with this.
+
+A:How do I get size of several children (ex. two in a row) and combine them?
+
+Is the fact that do you get size of several children ex two in a row
+and combine them the real reason?
+
+A: Borders and cell content are drawn separately. Good to know.
+
+I don't understand.
+
+A: Outer border and lines between cells are drawn separately.
+
+You mentioned that you do not know what are you doing?
+
+A: So if I'll draw a border of each cell separately, will this help me
+draw merged cell?
+
+Perhaps your plans have something to do with this.
+
+A: How to get size of each child?
+
+Does the fact that to get size of each child explain anything else?
+
+A: Merged cells somehow should be treated as a single
+cell. i.e. getting width and height for each single individual merged
+cell should return common height and width. How to do it? Have some
+kind of aggregate object/widget?
+
+Are you sure to do it have some kind of aggregate object widget?
+
