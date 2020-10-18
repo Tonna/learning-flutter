@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:table/rendering/my_table.dart';
+import 'package:table/rendering/my_table_border.dart';
 import 'package:table/widgets/my_table.dart';
 
 void main() {
@@ -98,7 +100,20 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            MyTable(children : [MyTableRow(children: [Text("a")])]),
+            MyTable(
+                defaultColumnWidth: MyMaxColumnWidth(
+                    const MyFixedColumnWidth(30.0), MyFractionColumnWidth(0.1)),
+                border: MyTableBorder.all(),
+                children: [
+                  MyTableRow(
+                      children: [Text("a"), Text("a"), Text("a"), Text("a")]),
+                  MyTableRow(
+                      children: [Text("a"), Text("a"), Text("a"), Text("a")]),
+                  MyTableRow(
+                      children: [Text("a"), Text("a"), Text("a"), Text("a")]),
+                  MyTableRow(
+                      children: [Text("a"), Text("a"), Text("a"), Text("a")]),
+                ]),
             Text(
               'You have pushed the button this many times:',
             ),
