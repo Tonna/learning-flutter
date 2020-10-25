@@ -116,9 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [Text("a"), Text("a"), Text("a"), Text("a")]),
                 ]),
             MyAnotherTable(
-              width: 4,
-              height: 4,
-              cells: null,
+              columns: 4,
+              rows: 4,
+              cells: [Text("a")],
             ),
             Text(
               'You have pushed the button this many times:',

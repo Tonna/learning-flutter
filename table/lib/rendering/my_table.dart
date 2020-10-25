@@ -395,6 +395,7 @@ class MyRenderTable extends RenderBox {
     _children = <RenderBox>[]..length = _columns * _rows;
     this.rowDecorations = rowDecorations; // must use setter to initialize box painters array
     children?.forEach(addRow);
+    print(_children);
   }
 
   // Children are stored in row-major order.
@@ -1163,6 +1164,7 @@ class MyRenderTable extends RenderBox {
         }
       }
     }
+    print(_children);
     for (int index = 0; index < _children.length; index += 1) {
       final RenderBox child = _children[index];
       if (child != null) {
