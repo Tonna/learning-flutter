@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table/rendering/my_table.dart';
 import 'package:table/rendering/my_table_border.dart';
 import 'package:table/widgets/my_table.dart';
+import 'package:table/widgets/my_another_table.dart';
 
 void main() {
   runApp(MyApp());
@@ -114,6 +115,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   MyTableRow(
                       children: [Text("a"), Text("a"), Text("a"), Text("a")]),
                 ]),
+            MyAnotherTable(
+              width: 4,
+              height: 4,
+              cells: null,
+            ),
             Text(
               'You have pushed the button this many times:',
             ),
