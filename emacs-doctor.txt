@@ -83,3 +83,18 @@ or in some recursive way?
 
 What do you think?
 
+
+2020-11-01
+
+A: I'm creating new widget that is a child of the RenderObjectWidget
+(chose it as first thing to come into my mind). Now
+I need to implement createElement() and createRenderObject(). 
+
+
+Is it because is a child of the renderobjectwidget chose it as first
+thing to come into your mind now you need to implement createelement
+and createrenderobject that you came to me?
+
+[[file:./images/screenshot-02.png]]
+
+Ok. Dart does return null from function implicitly.
