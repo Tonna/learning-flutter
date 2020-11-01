@@ -71,3 +71,15 @@ kind of aggregate object/widget?
 
 Are you sure to do it have some kind of aggregate object widget?
 
+
+2020-10-25
+
+If I'm writing widget for others what API should I provide?
+
+Why do you say that?
+
+How should table be rendered? Should it be vertical/horizontal first
+or in some recursive way?
+
+What do you think?
+
