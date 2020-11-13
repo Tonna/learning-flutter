@@ -172,3 +172,9 @@ and I don't return _child from widget - no getter
 
 
 how to set constraints to a RenderParagraph?
+
+I needed just to call layout and that is it.
+
+[[file:./images/screenshot-06.png]]
+
+[[file:./images/screenshot-07.png]]

@@ -112,6 +112,6 @@ class _MySingeChildLayoutDelegate extends SingleChildLayoutDelegate {
   @override
   Size getSize(BoxConstraints constraints) {
     // TODO: implement getSize
-    return Size(50, 50);
+    return Size(100, 40);
   }
 }
