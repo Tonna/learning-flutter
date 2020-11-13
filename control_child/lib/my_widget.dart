@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class MyWidget extends RenderObjectWidget {
@@ -8,18 +9,18 @@ class MyWidget extends RenderObjectWidget {
         _child = child;
 
   @override
-  MyWidgetElement createElement() {
-    return MyWidgetElement(this);
+  _MyWidgetElement createElement() {
+    return _MyWidgetElement(this);
   }
 
   @override
   _RenderMyWidget createRenderObject(BuildContext context) {
-    return _RenderMyWidget();
+    return _RenderMyWidget(_child.createElement().renderObject);
   }
 }
 
-class MyWidgetElement extends RenderObjectElement {
-  MyWidgetElement(MyWidget widget) : super(widget);
+class _MyWidgetElement extends RenderObjectElement {
+  _MyWidgetElement(MyWidget widget) : super(widget);
 
   @override
   MyWidget get widget => super.widget as MyWidget;
@@ -33,7 +34,9 @@ class MyWidgetElement extends RenderObjectElement {
   }
 }
 
-class _RenderMyWidget extends RenderBox {
+class _RenderMyWidget extends RenderShiftedBox {
+  _RenderMyWidget(RenderBox child) : super(child);
+
   // @override
   // void debugAssertDoesMeetConstraints() {
   //   // TODO: implement debugAssertDoesMeetConstraints
@@ -47,6 +50,14 @@ class _RenderMyWidget extends RenderBox {
   void performLayout() {
     final BoxConstraints constraints = this.constraints;
     size = constraints.constrain(Size(100, 100));
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (child != null) {
+      final BoxParentData childParentData = child.parentData as BoxParentData;
+      context.paintChild(child, childParentData.offset + offset);
+    }
   }
 
 // @override

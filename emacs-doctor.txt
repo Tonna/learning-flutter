@@ -100,3 +100,12 @@ and createrenderobject that you came to me?
 Ok. Dart does return null from function implicitly.
 
 I had to implement perform layout in RenderBox
+
+2020-11-13
+
+RenderMyWidget implements RenderShiftedBox now. RenderShiftedBox has constructor with child. So I need to pass child then? Actually all implementations of RenderShiftedBox I saw aren't passing child :)
+
+I don't understand what to do next.
+Ok maybe     return _RenderMyWidget(_child.createElement().renderObject); is better than return _RenderMyWidget(null);
+
+Where should I start? What should I do? Lets draw border for widget and child first
