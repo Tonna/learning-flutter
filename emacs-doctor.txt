@@ -109,3 +109,66 @@ I don't understand what to do next.
 Ok maybe     return _RenderMyWidget(_child.createElement().renderObject); is better than return _RenderMyWidget(null);
 
 Where should I start? What should I do? Lets draw border for widget and child first
+
+Lets make a step back. Removing RenderShifterBox. Just add child and paint borders
+
+There is a connection between widget type (parent type and element type returned in createElement?
+
+
+/// Defers the layout of its single child to a delegate.
+///
+/// The delegate can determine the layout constraints for the child and can
+/// decide where to position the child. The delegate can also determine the size
+/// of the parent, but the size of the parent cannot depend on the size of the
+/// child.
+class RenderCustomSingleChildLayoutBox
+
+This is not what we want? We want size of the parent to depend on the size of the child
+
+Lets inherit SingleChildRenderObjectWidget, SingleChildRenderObjectElement, RenderCustomSingleChildLayoutBox
+
+for RenderCustomSingleChildLayoutBox we need SingeChildLayoutDelegate
+
+
+is there a way to get child/children of Widget from RenderObject? how can we get those children, should we pass them on RenderObject create?
+
+Lets see how renderOpacity works
+where did it get the child? we aren't setting it, do we?
+
+[[file:./images/screenshot-03.png]]
+
+we take child for RenderObject from widget apparently
+and rebuild() is called
+
+ok, now I understand that in parent performLayout() SingeChildLayoutDelegate chould be called to get constaints for the child. I hope I'm not mistaken.
+
+Lets draw the borders though
+
+why doesn't method performLayout() called in my RenderObject ?
+my renderObject extends RenderCustomSingleChildLayoutBox. Why performLayout isn't called or I cannot see it?
+
+I have height infinity.
+I'm getting some errors, I wasn't noticing before - _getSize(constraints)
+[[file:./images/screenshot-04.png]]
+
+haven't implemented getSize in delegate actually.
+making size*3 times the size delegate returned
+
+Paint the borders at last
+
+
+Why doesn't my renderObject has child renderObject?
+
+because I'm not setting child in mount method in element
+
+and I don't return _child from widget - no getter
+
+
+
+
+[[file:./images/screenshot-05.png]]
+
+
+
+
+how to set constraints to a RenderParagraph?
