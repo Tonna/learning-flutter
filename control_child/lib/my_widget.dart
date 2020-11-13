@@ -69,12 +69,13 @@ class _RenderMyWidget extends RenderCustomSingleChildLayoutBox {
     if (child != null) {
       final BoxParentData childParentData = child.parentData as BoxParentData;
 
+      var childOffset = Offset(offset.dx + 10.0, offset.dy + 70.0);
       context.canvas.drawRect(
-          Offset(offset.dx + 10.0, offset.dy + 10.0) &
+          childOffset &
               child.semanticBounds.size,
           paint);
 
-      context.paintChild(child, childParentData.offset + offset);
+      context.paintChild(child, childParentData.offset + childOffset);
     }
   }
 }
