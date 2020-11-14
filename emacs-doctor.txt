@@ -178,3 +178,5 @@ I needed just to call layout and that is it.
 [[file:./images/screenshot-06.png]]
 
 [[file:./images/screenshot-07.png]]
+
+Column gives the width child wants, ListView gives sets size as all available width

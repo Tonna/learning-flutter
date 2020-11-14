@@ -41,19 +41,21 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: ListView(
           children: <Widget>[
-            MyWidget(Text("hello world!")),
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Opacity(
-                opacity: 1.0,
-                child: Text(
-                  '$_counter',
-                  style: Theme.of(context).textTheme.display1,
-                )),
+            Column(children: <Widget>[
+              MyWidget(Text("hello world!")),
+              MyWidget(Text("hello again!")),
+              Text(
+                'You have pushed the button this many times:',
+              ),
+              Opacity(
+                  opacity: 1.0,
+                  child: Text(
+                    '$_counter',
+                    style: Theme.of(context).textTheme.display1,
+                  ))
+            ]),
           ],
         ),
       ),

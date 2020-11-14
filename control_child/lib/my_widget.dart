@@ -26,20 +26,6 @@ class MyWidget extends SingleChildRenderObjectWidget {
 
 class _MyWidgetElement extends SingleChildRenderObjectElement {
   _MyWidgetElement(MyWidget widget) : super(widget);
-
-  Element _child;
-
-  @override
-  MyWidget get widget => super.widget as MyWidget;
-
-  @override
-  _RenderMyWidget get renderObject => super.renderObject as _RenderMyWidget;
-
-// @override
-// void mount(Element parent, dynamic newSlot) {
-//   super.mount(parent, newSlot);
-//   _child = updateChild(_child, widget.child, null);
-//}
 }
 
 class _RenderMyWidget extends RenderShiftedBox {
@@ -64,10 +50,6 @@ class _RenderMyWidget extends RenderShiftedBox {
         Size(childSize.width * rand(2, 2), childSize.height * rand(2, 2)));
   }
 
-  int rand(int startFrom, int maxAdd) {
-    return Random().nextInt(maxAdd) + startFrom;
-  }
-
   @override
   void paint(PaintingContext context, Offset offset) {
     final Paint paint = Paint()
@@ -84,9 +66,14 @@ class _RenderMyWidget extends RenderShiftedBox {
       var childOffset = Offset(
           offset.dx + rand(0, size.width.toInt() - child.size.width.toInt()),
           offset.dy + rand(0, size.height.toInt() - child.size.height.toInt()));
+
       context.canvas.drawRect(childOffset & child.semanticBounds.size, paint);
 
       context.paintChild(child, childParentData.offset + childOffset);
     }
+  }
+
+  int rand(int startFrom, int maxAdd) {
+    return startFrom + Random().nextInt(maxAdd);
   }
 }
