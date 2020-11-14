@@ -180,3 +180,13 @@ I needed just to call layout and that is it.
 [[file:./images/screenshot-07.png]]
 
 Column gives the width child wants, ListView gives sets size as all available width
+
+
+
+Realizaiton - part of code I added was clashing with parent class code
+
+
+
+Started panicing at some point. Didn't want to ask IVV for help. Article helped to https://www.didierboelens.com/2019/09/flutter-internals/ 
+
+After article https://medium.com/flutter-community/flutter-what-are-widgets-renderobjects-and-elements-630a57d05208 looked at opacity widget, debuged how it worked.
