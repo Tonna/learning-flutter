@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'my_widget.dart';
 
@@ -44,8 +46,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: ListView(
           children: <Widget>[
             Column(children: <Widget>[
-              MyWidget(Text("hello world!")),
-              MyWidget(Text("hello again!")),
               Text(
                 'You have pushed the button this many times:',
               ),
@@ -54,7 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text(
                     '$_counter',
                     style: Theme.of(context).textTheme.display1,
-                  ))
+                  )),
+              Random().nextBool() ? MyWidget(Text("hello world!")) : Text("hello world!"),
+              Random().nextBool() ? MyWidget(Text("hello again!")) : Text("hello again!"),
+              MyWidget(Text("hello world!")),
+              MyWidget(Text("hello again!")),
+
             ]),
           ],
         ),
