@@ -61,11 +61,14 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
 
     //TODO where should I get children to paint?
 
+    super.paint(context, offset);
+
   }
 }
 
 class _MyDelegate extends MultiChildLayoutDelegate {
   final int _childCount;
+  final double _step = 50.0;
   @override
   void performLayout(Size size) {
     //TODO how to get access to widget and children?
@@ -73,7 +76,8 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     for (int i = 0; i < _childCount; i++) {
       print("id=$i");
 
-      layoutChild(i, BoxConstraints.tightForFinite(width:100, height: 100));
+      layoutChild(i, BoxConstraints.tightForFinite(width:_step, height: _step));
+      positionChild(i, Offset(i * _step, i * _step));
     }
 
     // TODO: implement performLayout
@@ -85,6 +89,9 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     //throw UnimplementedError();
     return true;
   }
+
+
+
 
   _MyDelegate({@required int childCount})
       : _childCount = childCount,
