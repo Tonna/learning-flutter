@@ -1,7 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'my_widget.dart';
+
+import 'my_table.dart';
 
 void main() => runApp(MyApp());
 
@@ -55,11 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_counter',
                     style: Theme.of(context).textTheme.display1,
                   )),
-              Random().nextBool() ? MyWidget(Text("hello world!")) : Text("hello world!"),
-              Random().nextBool() ? MyWidget(Text("hello again!")) : Text("hello again!"),
-              MyWidget(Text("hello world!")),
-              MyWidget(Text("hello again!")),
-
+              MyTable([Text("hellow world!"), Text("hello again!")]),
             ]),
           ],
         ),
