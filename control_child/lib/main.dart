@@ -54,7 +54,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_counter',
                     style: Theme.of(context).textTheme.display1,
                   )),
-              MyTable([Text("hellow world!"), Text("hello again!")]),
+              Container(
+                  height: 200,
+                  child: MyTable(
+                      children: [Text("hellow world!"), Text("hello again!")])),
             ]),
           ],
         ),

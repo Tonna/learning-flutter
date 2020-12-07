@@ -7,7 +7,7 @@ class MyTable extends MultiChildRenderObjectWidget {
 
   List<Widget> get children => _children;
 
-  MyTable(List<Widget> children)
+  MyTable({List<Widget> children})
       : assert(children != null),
         _children = addAll(children);
 
@@ -18,7 +18,7 @@ class MyTable extends MultiChildRenderObjectWidget {
 
   @override
   _RenderMyWidget createRenderObject(BuildContext context) {
-    return _RenderMyWidget();
+    return _RenderMyWidget(delegate: _MyDelegate(childCount: _children.length));
   }
 }
 
@@ -35,11 +35,18 @@ class _MyWidgetElement extends MultiChildRenderObjectElement {
 }
 
 class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
-  _RenderMyWidget() : super(delegate: _MyDelegate());
+  _RenderMyWidget({MultiChildLayoutDelegate delegate}) : super(delegate: delegate);
+
+  @override
+  Size getSize(BoxConstraints constraints){
+    return Size(300, 300);
+  }
 
   @override
   void performLayout() {
     size = Size(200, 200);
+    super.performLayout();
+//    delegate.performLayout(size);
   }
 
   @override
@@ -51,13 +58,23 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
       ..maskFilter = MaskFilter.blur(BlurStyle.solid, 0.5);
 
     context.canvas.drawRect(offset & size, paint);
+
+    //TODO where should I get children to paint?
+
   }
 }
 
 class _MyDelegate extends MultiChildLayoutDelegate {
+  final int _childCount;
   @override
   void performLayout(Size size) {
     //TODO how to get access to widget and children?
+    //TODO WHy _idToChild list is empty?
+    for (int i = 0; i < _childCount; i++) {
+      print("id=$i");
+
+      layoutChild(i, BoxConstraints.tightForFinite(width:100, height: 100));
+    }
 
     // TODO: implement performLayout
   }
@@ -69,5 +86,7 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     return true;
   }
 
-  _MyDelegate() : super(relayout: null);
+  _MyDelegate({@required int childCount})
+      : _childCount = childCount,
+        super(relayout: null);
 }
