@@ -94,7 +94,7 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
     var child = firstChild;
     while (child != null) {
       MultiChildLayoutParentData childParentData =
-          child.parentData as MultiChildLayoutParentData;
+      child.parentData as MultiChildLayoutParentData;
       context.paintChild(child, childParentData.offset + offset);
       context.canvas
           .drawRect((childParentData.offset + offset) & child.size, paint);
@@ -108,7 +108,8 @@ class _MyDelegate extends MultiChildLayoutDelegate {
   final List<MyTableCell> _layout;
   final int _sizeX;
   final int _sizeY;
-  final double _step = 50.0;
+  final double _stepX = 50.0;
+  final double _stepY = 50.0;
 
   @override
   void performLayout(Size size) {
@@ -118,8 +119,8 @@ class _MyDelegate extends MultiChildLayoutDelegate {
       print("id=$i");
 
       layoutChild(
-          i, BoxConstraints.tightForFinite(width: _step, height: _step));
-      positionChild(i, Offset(i * _step, i * _step));
+          i, BoxConstraints.tightForFinite(width: _stepX, height: _stepY));
+      positionChild(i, Offset(i * _stepX, i * _stepY));
     }
 
     // TODO: implement performLayout
@@ -132,12 +133,13 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     return true;
   }
 
-  _MyDelegate(
-      {@required List<Widget> children,
-      List<MyTableCell> layout,
-      int sizeX,
-      int sizeY})
-      : _children = children,
+  _MyDelegate({@required List<Widget> children,
+    List<MyTableCell> layout,
+    int sizeX,
+    int sizeY})
+      :
+        assert(children != null),
+        _children = children,
         _layout = layout,
         _sizeX = sizeX,
         _sizeY = sizeY,
