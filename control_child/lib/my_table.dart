@@ -11,10 +11,7 @@ class MyTableCell {
   final int gridSizeY;
 
   MyTableCell(
-      {this.gridOffsetX,
-      this.gridOffsetY,
-      this.gridSizeX,
-      this.gridSizeY});
+      {this.gridOffsetX, this.gridOffsetY, this.gridSizeX, this.gridSizeY});
 }
 
 class MyTable extends MultiChildRenderObjectWidget {
@@ -79,17 +76,13 @@ List<MyTableCell> addAllB(List<MyTableCell> children, int sizeX, int sizeY) {
     out.add(children[i]);
     children[i].layoutId = i;
     children[i].dummy = false;
-
   }
 
   List<MyTableCell> dummies = [];
   for (int i = 0; i < sizeX; i++) {
     for (int k = 0; k < sizeY; k++) {
       var dummy = MyTableCell(
-          gridOffsetX: i,
-          gridOffsetY: k,
-          gridSizeX: 1,
-          gridSizeY: 1);
+          gridOffsetX: i, gridOffsetY: k, gridSizeX: 1, gridSizeY: 1);
       dummy.dummy = true;
       dummies.add(dummy);
     }
@@ -100,9 +93,10 @@ List<MyTableCell> addAllB(List<MyTableCell> children, int sizeX, int sizeY) {
         i < realCell.gridOffsetX + realCell.gridSizeX;
         i++) {
       for (int k = realCell.gridOffsetY;
-          k < realCell.gridOffsetY + realCell.gridOffsetY;
+          k < realCell.gridOffsetY + realCell.gridSizeY;
           k++) {
-        dummies.removeAt(i + (i * k));
+        dummies.removeWhere(
+            (dummy) => dummy.gridOffsetX == i && dummy.gridOffsetY == k);
       }
     }
   }
