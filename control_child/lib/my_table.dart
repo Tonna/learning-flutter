@@ -59,9 +59,20 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
 
     context.canvas.drawRect(offset & size, paint);
 
+
     //TODO where should I get children to paint?
 
-    super.paint(context, offset);
+    //super.paint(context, offset);
+
+
+    //this is defaultPaint method code
+    var child = firstChild;
+    while (child != null) {
+      MultiChildLayoutParentData childParentData = child.parentData as MultiChildLayoutParentData;
+      context.paintChild(child, childParentData.offset + offset);
+      context.canvas.drawRect((childParentData.offset + offset) & child.size, paint);
+      child = childParentData.nextSibling;
+    }
 
   }
 }
