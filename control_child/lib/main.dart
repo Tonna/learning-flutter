@@ -55,6 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: Theme.of(context).textTheme.display1,
                   )),
               Container(
+                width: 200,
                   height: 200,
                   child: MyTable(children: [
                     Text("hellow world!"),

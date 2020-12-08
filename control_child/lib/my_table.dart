@@ -23,6 +23,7 @@ class MyTable extends MultiChildRenderObjectWidget {
   //TODO pass layout structure
   //TODO do check passed children and layout?
   //TODO fill empty cells on a grid with an empty widgets
+  //TODO do I create N dummy widgets to fill empty layout ? or I use single dummy one?
 
   MyTable(
       {List<Widget> children, List<MyTableCell> layout, int sizeX, int sizeY})
@@ -65,16 +66,9 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
       : super(delegate: delegate);
 
   @override
-  Size getSize(BoxConstraints constraints) {
-    return Size(300, 300);
-  }
-
-  @override
   void performLayout() {
-    size = Size(200, 200);
     super.performLayout();
-//    delegate.performLayout(size);
-  }
+ }
 
   @override
   void paint(PaintingContext context, Offset offset) {
