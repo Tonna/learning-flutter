@@ -55,23 +55,30 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: Theme.of(context).textTheme.display1,
                   )),
               Container(
-                width: 200,
-                  height: 200,
+                  width: 300,
+                  height: 300,
                   child: MyTable(children: [
                     Text("hellow world!"),
-                    Text("hello again!")
+                    Text("hello again!"),
+                    Text(
+                        "hi !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                   ], layout: [
                     MyTableCell(
                         gridOffsetX: 0,
                         gridOffsetY: 0,
                         gridSizeX: 1,
-                        gridSizeY: 1),
+                        gridSizeY: 2),
                     MyTableCell(
                         gridOffsetX: 3,
                         gridOffsetY: 1,
-                        gridSizeX: 3,
-                        gridSizeY: 2)
-                  ], sizeX: 8, sizeY: 8)),
+                        gridSizeX: 2,
+                        gridSizeY: 4),
+                    MyTableCell(
+                        gridOffsetX: 0,
+                        gridOffsetY: 3,
+                        gridSizeX: 1,
+                        gridSizeY: 1)
+                  ], sizeX: 5, sizeY: 4)),
             ]),
           ],
         ),

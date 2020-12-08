@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class MyTableCell {
+  int layoutId;
   final int gridOffsetX;
   final int gridOffsetY;
   final int gridSizeX;
@@ -28,8 +29,9 @@ class MyTable extends MultiChildRenderObjectWidget {
   MyTable(
       {List<Widget> children, List<MyTableCell> layout, int sizeX, int sizeY})
       : assert(children != null),
-        _children = addAll(children),
-        _layout = layout,
+        assert(children.length == layout.length),
+        _children = addAllA(children),
+        _layout = addAllB(layout),
         _sizeX = sizeX,
         _sizeY = sizeY;
 
@@ -49,12 +51,20 @@ class MyTable extends MultiChildRenderObjectWidget {
   }
 }
 
-addAll(List<Widget> children) {
+addAllA(List<Widget> children) {
   List<Widget> out = [];
   for (int i = 0; i < children.length; i++) {
     out.add(LayoutId(id: i, child: children[i]));
   }
   return out;
+}
+
+addAllB(List<MyTableCell> children) {
+  //fixme dirty approach but keep for now
+  for (int i = 0; i < children.length; i++) {
+    children[i].layoutId = i;
+  }
+  return children;
 }
 
 class _MyWidgetElement extends MultiChildRenderObjectElement {
@@ -68,7 +78,7 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
   @override
   void performLayout() {
     super.performLayout();
- }
+  }
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -78,7 +88,11 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
       ..style = PaintingStyle.stroke
       ..maskFilter = MaskFilter.blur(BlurStyle.solid, 0.5);
 
-    context.canvas.drawRect(offset & size, paint);
+    final Paint paintBlack = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke
+      ..maskFilter = MaskFilter.blur(BlurStyle.solid, 0.5);
 
     //TODO where should I get children to paint?
 
@@ -88,12 +102,14 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
     var child = firstChild;
     while (child != null) {
       MultiChildLayoutParentData childParentData =
-      child.parentData as MultiChildLayoutParentData;
+          child.parentData as MultiChildLayoutParentData;
       context.paintChild(child, childParentData.offset + offset);
       context.canvas
-          .drawRect((childParentData.offset + offset) & child.size, paint);
+          .drawRect((childParentData.offset + offset) & child.size, paintBlack);
       child = childParentData.nextSibling;
     }
+
+    context.canvas.drawRect(offset & size, paint);
   }
 }
 
@@ -102,19 +118,28 @@ class _MyDelegate extends MultiChildLayoutDelegate {
   final List<MyTableCell> _layout;
   final int _sizeX;
   final int _sizeY;
-  final double _stepX = 50.0;
-  final double _stepY = 50.0;
+  double _stepX;
+  double _stepY;
 
   @override
   void performLayout(Size size) {
+    _stepX = size.width / _sizeX;
+    _stepY = size.height / _sizeY;
+
     //TODO how to get access to widget and children?
     //TODO WHy _idToChild list is empty?
     for (int i = 0; i < _children.length; i++) {
       print("id=$i");
 
       layoutChild(
-          i, BoxConstraints.tightForFinite(width: _stepX, height: _stepY));
-      positionChild(i, Offset(i * _stepX, i * _stepY));
+          i,
+          BoxConstraints.tightForFinite(
+              width: _stepX * _layout[i].gridSizeX,
+              height: _stepY * _layout[i].gridSizeY));
+      positionChild(
+          i,
+          Offset(_layout[i].gridOffsetX * _stepX,
+              _layout[i].gridOffsetY * _stepY));
     }
 
     // TODO: implement performLayout
@@ -127,12 +152,12 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     return true;
   }
 
-  _MyDelegate({@required List<Widget> children,
-    List<MyTableCell> layout,
-    int sizeX,
-    int sizeY})
-      :
-        assert(children != null),
+  _MyDelegate(
+      {@required List<Widget> children,
+      List<MyTableCell> layout,
+      int sizeX,
+      int sizeY})
+      : assert(children != null),
         _children = children,
         _layout = layout,
         _sizeX = sizeX,
