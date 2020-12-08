@@ -2,14 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+class MyTableCell {
+  final int gridOffsetX;
+  final int gridOffsetY;
+  final int gridSizeX;
+  final int gridSizeY;
+
+  MyTableCell(
+      {this.gridOffsetX, this.gridOffsetY, this.gridSizeX, this.gridSizeY});
+}
+
 class MyTable extends MultiChildRenderObjectWidget {
   final List<Widget> _children;
+  final List<MyTableCell> _layout;
+  final int _sizeX;
+  final int _sizeY;
 
   List<Widget> get children => _children;
 
-  MyTable({List<Widget> children})
+  //TODO pass layout structure
+  //TODO do check passed children and layout?
+  //TODO fill empty cells on a grid with an empty widgets
+
+  MyTable(
+      {List<Widget> children, List<MyTableCell> layout, int sizeX, int sizeY})
       : assert(children != null),
-        _children = addAll(children);
+        _children = addAll(children),
+        _layout = layout,
+        _sizeX = sizeX,
+        _sizeY = sizeY;
 
   @override
   _MyWidgetElement createElement() {
@@ -18,7 +39,12 @@ class MyTable extends MultiChildRenderObjectWidget {
 
   @override
   _RenderMyWidget createRenderObject(BuildContext context) {
-    return _RenderMyWidget(delegate: _MyDelegate(childCount: _children.length));
+    return _RenderMyWidget(
+        delegate: _MyDelegate(
+            children: _children,
+            layout: _layout,
+            sizeX: _sizeX,
+            sizeY: _sizeY));
   }
 }
 
@@ -35,10 +61,11 @@ class _MyWidgetElement extends MultiChildRenderObjectElement {
 }
 
 class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
-  _RenderMyWidget({MultiChildLayoutDelegate delegate}) : super(delegate: delegate);
+  _RenderMyWidget({MultiChildLayoutDelegate delegate})
+      : super(delegate: delegate);
 
   @override
-  Size getSize(BoxConstraints constraints){
+  Size getSize(BoxConstraints constraints) {
     return Size(300, 300);
   }
 
@@ -59,35 +86,39 @@ class _RenderMyWidget extends RenderCustomMultiChildLayoutBox {
 
     context.canvas.drawRect(offset & size, paint);
 
-
     //TODO where should I get children to paint?
 
     //super.paint(context, offset);
 
-
     //this is defaultPaint method code
     var child = firstChild;
     while (child != null) {
-      MultiChildLayoutParentData childParentData = child.parentData as MultiChildLayoutParentData;
+      MultiChildLayoutParentData childParentData =
+          child.parentData as MultiChildLayoutParentData;
       context.paintChild(child, childParentData.offset + offset);
-      context.canvas.drawRect((childParentData.offset + offset) & child.size, paint);
+      context.canvas
+          .drawRect((childParentData.offset + offset) & child.size, paint);
       child = childParentData.nextSibling;
     }
-
   }
 }
 
 class _MyDelegate extends MultiChildLayoutDelegate {
-  final int _childCount;
+  final List<Widget> _children;
+  final List<MyTableCell> _layout;
+  final int _sizeX;
+  final int _sizeY;
   final double _step = 50.0;
+
   @override
   void performLayout(Size size) {
     //TODO how to get access to widget and children?
     //TODO WHy _idToChild list is empty?
-    for (int i = 0; i < _childCount; i++) {
+    for (int i = 0; i < _children.length; i++) {
       print("id=$i");
 
-      layoutChild(i, BoxConstraints.tightForFinite(width:_step, height: _step));
+      layoutChild(
+          i, BoxConstraints.tightForFinite(width: _step, height: _step));
       positionChild(i, Offset(i * _step, i * _step));
     }
 
@@ -101,10 +132,14 @@ class _MyDelegate extends MultiChildLayoutDelegate {
     return true;
   }
 
-
-
-
-  _MyDelegate({@required int childCount})
-      : _childCount = childCount,
+  _MyDelegate(
+      {@required List<Widget> children,
+      List<MyTableCell> layout,
+      int sizeX,
+      int sizeY})
+      : _children = children,
+        _layout = layout,
+        _sizeX = sizeX,
+        _sizeY = sizeY,
         super(relayout: null);
 }

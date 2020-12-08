@@ -56,8 +56,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   )),
               Container(
                   height: 200,
-                  child: MyTable(
-                      children: [Text("hellow world!"), Text("hello again!")])),
+                  child: MyTable(children: [
+                    Text("hellow world!"),
+                    Text("hello again!")
+                  ], layout: [
+                    MyTableCell(
+                        gridOffsetX: 0,
+                        gridOffsetY: 0,
+                        gridSizeX: 1,
+                        gridSizeY: 1),
+                    MyTableCell(
+                        gridOffsetX: 3,
+                        gridOffsetY: 1,
+                        gridSizeX: 3,
+                        gridSizeY: 2)
+                  ], sizeX: 8, sizeY: 8)),
             ]),
           ],
         ),
