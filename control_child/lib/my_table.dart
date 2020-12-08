@@ -4,13 +4,17 @@ import 'package:flutter/widgets.dart';
 
 class MyTableCell {
   int layoutId;
+  bool dummy = false;
   final int gridOffsetX;
   final int gridOffsetY;
   final int gridSizeX;
   final int gridSizeY;
 
   MyTableCell(
-      {this.gridOffsetX, this.gridOffsetY, this.gridSizeX, this.gridSizeY});
+      {this.gridOffsetX,
+      this.gridOffsetY,
+      this.gridSizeX,
+      this.gridSizeY});
 }
 
 class MyTable extends MultiChildRenderObjectWidget {
@@ -21,17 +25,17 @@ class MyTable extends MultiChildRenderObjectWidget {
 
   List<Widget> get children => _children;
 
+  //TODO do I create N dummy widgets to fill empty layout ? or I use single dummy one?
+
   //TODO pass layout structure
   //TODO do check passed children and layout?
   //TODO fill empty cells on a grid with an empty widgets
-  //TODO do I create N dummy widgets to fill empty layout ? or I use single dummy one?
-
   MyTable(
       {List<Widget> children, List<MyTableCell> layout, int sizeX, int sizeY})
       : assert(children != null),
         assert(children.length == layout.length),
-        _children = addAllA(children),
-        _layout = addAllB(layout),
+        _layout = addAllB(layout, sizeX, sizeY),
+        _children = addAllA(children, layout, sizeX, sizeY),
         _sizeX = sizeX,
         _sizeY = sizeY;
 
@@ -51,20 +55,65 @@ class MyTable extends MultiChildRenderObjectWidget {
   }
 }
 
-addAllA(List<Widget> children) {
+addAllA(List<Widget> children, List<MyTableCell> layout, int sizeX, int sizeY) {
   List<Widget> out = [];
   for (int i = 0; i < children.length; i++) {
     out.add(LayoutId(id: i, child: children[i]));
   }
+
+  var layoutsCells = addAllB(layout, sizeX, sizeY);
+  int numberOfDummies = layoutsCells.where((element) => element.dummy).length;
+
+  for (int i = out.length; i < numberOfDummies; i++) {
+    out.add(LayoutId(id: i, child: SizedBox.shrink()));
+  }
+
   return out;
 }
 
-addAllB(List<MyTableCell> children) {
+List<MyTableCell> addAllB(List<MyTableCell> children, int sizeX, int sizeY) {
+  List<MyTableCell> out = [];
+
   //fixme dirty approach but keep for now
   for (int i = 0; i < children.length; i++) {
+    out.add(children[i]);
     children[i].layoutId = i;
+    children[i].dummy = false;
+
   }
-  return children;
+
+  List<MyTableCell> dummies = [];
+  for (int i = 0; i < sizeX; i++) {
+    for (int k = 0; k < sizeY; k++) {
+      var dummy = MyTableCell(
+          gridOffsetX: i,
+          gridOffsetY: k,
+          gridSizeX: 1,
+          gridSizeY: 1);
+      dummy.dummy = true;
+      dummies.add(dummy);
+    }
+  }
+
+  for (MyTableCell realCell in children) {
+    for (int i = realCell.gridOffsetX;
+        i < realCell.gridOffsetX + realCell.gridSizeX;
+        i++) {
+      for (int k = realCell.gridOffsetY;
+          k < realCell.gridOffsetY + realCell.gridOffsetY;
+          k++) {
+        dummies.removeAt(i + (i * k));
+      }
+    }
+  }
+
+  int dummyIdCount = children.length;
+  for (MyTableCell dummy in dummies) {
+    dummy.layoutId = dummyIdCount++;
+    out.add(dummy);
+  }
+
+  return out;
 }
 
 class _MyWidgetElement extends MultiChildRenderObjectElement {
